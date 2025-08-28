@@ -28,6 +28,7 @@ from fraudlens.processors.vision.image_preprocessor import ImagePreprocessor
 from fraudlens.processors.vision.pdf_processor import PDFProcessor
 from fraudlens.processors.vision.utils.feature_extractor import VisualFeatureExtractor
 from fraudlens.processors.vision.utils.ocr_engine import OCREngine
+from fraudlens.training.known_fakes import KnownFakeDatabase
 
 
 @dataclass
@@ -174,6 +175,9 @@ class VisionFraudDetector(FraudDetector):
             check_malicious_urls=True,
         )
         
+        # Known fake database
+        self.known_fake_db = KnownFakeDatabase()
+        
         # Cache for results
         self._cache: Dict[str, Any] = {}
         self._cache_order: List[str] = []
@@ -296,6 +300,34 @@ class VisionFraudDetector(FraudDetector):
         image = Image.open(image_path)
         processed_image = await self.preprocessor.process(image)
         
+        # Check for known fakes first (high priority)
+        extracted_text = None
+        try:
+            ocr_result = await self.ocr_engine.extract_text(processed_image)
+            if isinstance(ocr_result, dict) and "text" in ocr_result:
+                extracted_text = ocr_result["text"]
+            elif isinstance(ocr_result, str):
+                extracted_text = ocr_result
+        except:
+            pass
+        
+        known_fake_result = self.known_fake_db.check_document(processed_image, extracted_text)
+        
+        # If it's a known fake with high confidence, return immediately
+        if known_fake_result["is_known_fake"] and known_fake_result["confidence"] > 0.9:
+            processing_time = (time.time() - start_time) * 1000
+            
+            return ImageAnalysis(
+                fraud_detected=True,
+                fraud_types=["known_fake", known_fake_result["fake_type"]],
+                confidence=known_fake_result["confidence"],
+                manipulations={"known_fake": known_fake_result},
+                extracted_text=extracted_text,
+                entities=[],
+                metadata_anomalies=known_fake_result["reasons"],
+                processing_time_ms=processing_time
+            )
+        
         # Run parallel analysis
         analysis_tasks = []
         
@@ -389,7 +421,17 @@ class VisionFraudDetector(FraudDetector):
             manipulations["qr_payload"] = results["qr"]["payload"]
         
         # Extract text if available
-        extracted_text = results.get("ocr", {}).get("text", None)
+        extracted_text = results.get("ocr", {}).get("text", None) if extracted_text is None else extracted_text
+        
+        # Include known fake detection result if not already detected
+        if known_fake_result["is_known_fake"]:
+            if "known_fake" not in fraud_types:
+                fraud_types.append("known_fake")
+            if known_fake_result["fake_type"] not in fraud_types:
+                fraud_types.append(known_fake_result["fake_type"])
+            confidence_scores.append(known_fake_result["confidence"])
+            manipulations["known_fake"] = known_fake_result
+            metadata_anomalies.extend(known_fake_result["reasons"])
         
         # Calculate overall confidence
         confidence = max(confidence_scores) if confidence_scores else 0.0

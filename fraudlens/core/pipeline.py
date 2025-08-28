@@ -20,6 +20,11 @@ from fraudlens.core.resource_manager.manager import ResourceManager
 from fraudlens.plugins.manager import PluginManager
 from fraudlens.processors.text.detector import TextFraudDetector
 from fraudlens.processors.vision.detector import VisionFraudDetector
+from fraudlens.integrations import (
+    ThreatIntelligenceManager,
+    DocumentValidator,
+    PhishingDatabaseConnector
+)
 
 
 class FraudDetectionPipeline:
@@ -51,6 +56,12 @@ class FraudDetectionPipeline:
         
         self.model_registry = ModelRegistry()
         self.plugin_manager = PluginManager()
+        
+        # External integrations
+        config_dict = self.config.to_dict() if hasattr(self.config, 'to_dict') else {}
+        self.threat_intel = ThreatIntelligenceManager(config=config_dict)
+        self.document_validator = DocumentValidator()
+        self.phishing_db = PhishingDatabaseConnector(config=config_dict)
         
         # Processors for different modalities
         self.processors = {}
@@ -106,6 +117,10 @@ class FraudDetectionPipeline:
         
         # Load plugins
         await self.plugin_manager.load_plugins()
+        
+        # Initialize external integrations
+        await self.threat_intel.initialize()
+        await self.phishing_db.check_url("https://example.com")  # Prime cache
         
         self._initialized = True
         init_time = (time.time() - start_time) * 1000
@@ -321,6 +336,114 @@ class FraudDetectionPipeline:
             "processors": list(self.processors.keys()),
         }
     
+    async def validate_document(self, document_data: str, document_type: str = "auto") -> Dict[str, Any]:
+        """
+        Validate identity document using external databases.
+        
+        Args:
+            document_data: Document number or MRZ data
+            document_type: Type of document (ssn, passport, driver_license, etc.)
+            
+        Returns:
+            Validation result with fraud indicators
+        """
+        # Use document validator
+        validation = self.document_validator.validate_document(document_data, document_type)
+        
+        # Enhance with fraud scoring
+        fraud_score = 0.0
+        if not validation.get("valid", False):
+            fraud_score = 0.8  # Invalid documents are highly suspicious
+        
+        return {
+            **validation,
+            "fraud_score": fraud_score,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    async def check_url_threat(self, url: str) -> Dict[str, Any]:
+        """
+        Check URL against threat intelligence databases.
+        
+        Args:
+            url: URL to check
+            
+        Returns:
+            Threat assessment with recommendations
+        """
+        # Check phishing databases
+        phishing_result = await self.phishing_db.check_url(url)
+        
+        # Check threat intelligence
+        threat_result = await self.threat_intel.check_url(url)
+        
+        # Combine results
+        combined_score = max(
+            phishing_result.get("confidence", 0.0),
+            threat_result.get("threat_score", 0.0)
+        )
+        
+        return {
+            "url": url,
+            "is_malicious": combined_score > 0.5,
+            "threat_score": combined_score,
+            "phishing_analysis": phishing_result,
+            "threat_intelligence": threat_result,
+            "recommendations": phishing_result.get("recommendations", [])
+        }
+    
+    async def check_email_threat(self, email: str, content: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Check email for fraud indicators.
+        
+        Args:
+            email: Email address
+            content: Email content (optional)
+            
+        Returns:
+            Fraud assessment
+        """
+        # Check email address
+        email_threat = await self.threat_intel.check_email(email)
+        
+        fraud_score = email_threat.get("threat_score", 0.0)
+        threats = email_threat.get("threats", [])
+        
+        # If content provided, check for phishing
+        if content:
+            text_result = await self.process(content, modality="text")
+            if text_result:
+                fraud_score = max(fraud_score, text_result.fraud_score / 100)
+                if text_result.fraud_types:
+                    threats.extend([f"Content: {ft}" for ft in text_result.fraud_types])
+        
+        return {
+            "email": email,
+            "fraud_score": fraud_score,
+            "threats": threats,
+            "is_suspicious": fraud_score > 0.5
+        }
+    
+    async def enhance_detection_with_intel(self, result: DetectionResult) -> DetectionResult:
+        """
+        Enhance detection result with threat intelligence.
+        
+        Args:
+            result: Original detection result
+            
+        Returns:
+            Enhanced detection result
+        """
+        # Extract URLs from result if present
+        if hasattr(result, 'metadata') and 'urls' in result.metadata:
+            for url in result.metadata['urls']:
+                threat_result = await self.check_url_threat(url)
+                if threat_result['is_malicious']:
+                    result.fraud_score = min(100, result.fraud_score + 20)
+                    result.fraud_types.append("malicious_url")
+        
+        return result
+    
     async def cleanup(self):
         """Clean up pipeline resources."""
         logger.info("Cleaning up FraudDetection Pipeline...")
@@ -333,6 +456,10 @@ class FraudDetectionPipeline:
         
         if cleanup_tasks:
             await asyncio.gather(*cleanup_tasks, return_exceptions=True)
+        
+        # Clean up integrations
+        await self.threat_intel.cleanup()
+        await self.phishing_db.cleanup()
         
         # Clean up other components
         await self.resource_manager.stop_monitoring()

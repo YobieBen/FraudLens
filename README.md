@@ -23,7 +23,7 @@ Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get i
 
 ## 🧠 AI Architecture & Intelligence Stack
 
-FraudLens employs a carefully orchestrated ensemble of specialized AI models, each chosen for their unique strengths and working together in a systemic framework that maximizes detection accuracy while minimizing false positives.
+FraudLens employs a carefully orchestrated ensemble of specialized open-source AI models, each chosen for their unique strengths and working together in a systemic framework that maximizes detection accuracy while minimizing false positives.
 
 ### Core Model Selection & Rationale
 

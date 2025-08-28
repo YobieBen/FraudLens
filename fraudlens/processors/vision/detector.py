@@ -8,6 +8,7 @@ Date: 2025-08-27 18:48:00 PDT
 import asyncio
 import hashlib
 import json
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime

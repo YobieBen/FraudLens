@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+import traceback
 import tracemalloc
 from dataclasses import dataclass, field
 from datetime import datetime

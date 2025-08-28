@@ -1,0 +1,1004 @@
+openapi: 3.0.3
+info:
+  title: FraudLens API
+  description: |
+    Comprehensive fraud detection and analysis API for financial and security systems.
+    
+    ## Features
+    - Multi-modal fraud detection (text, image, document, audio)
+    - Real-time and batch processing
+    - Webhook callbacks for async operations
+    - Compliance with GDPR, PCI DSS, and SOC 2
+    
+    ## Authentication
+    The API supports multiple authentication methods:
+    - OAuth 2.0 with JWT tokens
+    - API Key authentication
+    - HMAC request signing
+    
+    ## Rate Limiting
+    - Default: 1000 requests per minute
+    - Batch endpoints: 100 requests per minute
+    - Streaming endpoints: 10 concurrent connections
+  version: 1.0.0
+  contact:
+    name: FraudLens Support
+    email: support@fraudlens.com
+    url: https://fraudlens.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.fraudlens.com/v1
+    description: Production server
+  - url: https://staging-api.fraudlens.com/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Local development
+
+security:
+  - OAuth2: [read, write]
+  - ApiKeyAuth: []
+
+tags:
+  - name: Analysis
+    description: Fraud detection and analysis operations
+  - name: Documents
+    description: Document processing and verification
+  - name: Transactions
+    description: Transaction risk assessment
+  - name: Reports
+    description: Analysis reports and insights
+  - name: Webhooks
+    description: Webhook subscription management
+  - name: Batch
+    description: Batch processing operations
+  - name: Streaming
+    description: Real-time streaming analysis
+  - name: Compliance
+    description: Compliance and data management
+  - name: Admin
+    description: Administrative operations
+
+paths:
+  /analyze/text:
+    post:
+      tags: [Analysis]
+      summary: Analyze text for fraud indicators
+      operationId: analyzeText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextAnalysisRequest'
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextAnalysisResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /analyze/document:
+    post:
+      tags: [Documents]
+      summary: Analyze document for fraud or forgery
+      operationId: analyzeDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file (PDF, image, etc.)
+                metadata:
+                  type: object
+                  description: Additional document metadata
+      responses:
+        '200':
+          description: Document analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAnalysisResult'
+        '202':
+          description: Analysis accepted for async processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobResponse'
+
+  /analyze/transaction:
+    post:
+      tags: [Transactions]
+      summary: Analyze transaction for fraud risk
+      operationId: analyzeTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '200':
+          description: Transaction analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskScore'
+
+  /analyze/batch:
+    post:
+      tags: [Batch]
+      summary: Submit batch analysis job
+      operationId: analyzeBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchAnalysisRequest'
+      responses:
+        '202':
+          description: Batch job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchJobResponse'
+
+  /analyze/stream:
+    get:
+      tags: [Streaming]
+      summary: Open streaming analysis connection
+      operationId: streamAnalysis
+      parameters:
+        - name: types
+          in: query
+          description: Types of analysis to stream
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [text, document, transaction, all]
+      responses:
+        '200':
+          description: Streaming connection established
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                format: binary
+
+  /reports/{analysisId}:
+    get:
+      tags: [Reports]
+      summary: Get detailed analysis report
+      operationId: getReport
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, pdf, html]
+            default: json
+      responses:
+        '200':
+          description: Report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /webhooks:
+    get:
+      tags: [Webhooks]
+      summary: List webhook subscriptions
+      operationId: listWebhooks
+      responses:
+        '200':
+          description: Webhook list retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookSubscription'
+    
+    post:
+      tags: [Webhooks]
+      summary: Create webhook subscription
+      operationId: subscribeWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRequest'
+      responses:
+        '201':
+          description: Webhook subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+
+  /webhooks/{webhookId}:
+    delete:
+      tags: [Webhooks]
+      summary: Delete webhook subscription
+      operationId: deleteWebhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Webhook deleted successfully
+
+  /compliance/anonymize:
+    post:
+      tags: [Compliance]
+      summary: Anonymize sensitive data
+      operationId: anonymizeData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnonymizationRequest'
+      responses:
+        '200':
+          description: Data anonymized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnonymizedData'
+
+  /compliance/delete-user/{userId}:
+    delete:
+      tags: [Compliance]
+      summary: Delete all user data (GDPR right to deletion)
+      operationId: deleteUserData
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User data deletion completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionResult'
+
+  /compliance/export-user/{userId}:
+    get:
+      tags: [Compliance]
+      summary: Export all user data (GDPR data portability)
+      operationId: exportUserData
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xml]
+            default: json
+      responses:
+        '200':
+          description: User data exported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDataExport'
+
+  /compliance/audit-log:
+    get:
+      tags: [Compliance]
+      summary: Retrieve audit log
+      operationId: getAuditLog
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: Audit log retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+
+  /admin/health:
+    get:
+      tags: [Admin]
+      summary: Health check endpoint
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /admin/metrics:
+    get:
+      tags: [Admin]
+      summary: Get service metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics retrieved
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Prometheus format metrics
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.fraudlens.com/oauth/authorize
+          tokenUrl: https://auth.fraudlens.com/oauth/token
+          scopes:
+            read: Read access to fraud analysis
+            write: Write access to submit analysis
+            admin: Administrative access
+    
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    
+    HMACAuth:
+      type: apiKey
+      in: header
+      name: X-Signature
+
+  schemas:
+    TextAnalysisRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          description: Text content to analyze
+          maxLength: 50000
+        language:
+          type: string
+          description: Language code (ISO 639-1)
+          default: en
+        context:
+          type: object
+          description: Additional context for analysis
+          properties:
+            source:
+              type: string
+              enum: [email, sms, chat, social_media, document]
+            sender:
+              type: string
+            recipient:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+        options:
+          type: object
+          properties:
+            detectPhishing:
+              type: boolean
+              default: true
+            detectScam:
+              type: boolean
+              default: true
+            detectSocialEngineering:
+              type: boolean
+              default: true
+            urgencyLevel:
+              type: string
+              enum: [low, medium, high]
+              default: medium
+
+    TextAnalysisResult:
+      type: object
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        fraudScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+        fraudTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              confidence:
+                type: number
+                format: float
+              evidence:
+                type: array
+                items:
+                  type: string
+        indicators:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+              severity:
+                type: string
+              location:
+                type: object
+                properties:
+                  start:
+                    type: integer
+                  end:
+                    type: integer
+        recommendations:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          properties:
+            processingTime:
+              type: number
+              format: float
+            modelsUsed:
+              type: array
+              items:
+                type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    DocumentAnalysisResult:
+      type: object
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        documentType:
+          type: string
+        fraudScore:
+          type: number
+          format: float
+        forgeryDetected:
+          type: boolean
+        manipulations:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              confidence:
+                type: number
+              region:
+                type: object
+                properties:
+                  x:
+                    type: integer
+                  y:
+                    type: integer
+                  width:
+                    type: integer
+                  height:
+                    type: integer
+        extractedText:
+          type: string
+        metadata:
+          type: object
+          properties:
+            fileHash:
+              type: string
+            fileSize:
+              type: integer
+            mimeType:
+              type: string
+            processingTime:
+              type: number
+
+    Transaction:
+      type: object
+      required: [amount, currency, timestamp]
+      properties:
+        transactionId:
+          type: string
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        timestamp:
+          type: string
+          format: date-time
+        sender:
+          $ref: '#/components/schemas/Party'
+        recipient:
+          $ref: '#/components/schemas/Party'
+        paymentMethod:
+          type: string
+          enum: [card, bank_transfer, crypto, cash, other]
+        merchantInfo:
+          type: object
+          properties:
+            name:
+              type: string
+            category:
+              type: string
+            location:
+              type: string
+        deviceInfo:
+          type: object
+          properties:
+            ipAddress:
+              type: string
+            userAgent:
+              type: string
+            deviceId:
+              type: string
+
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            country:
+              type: string
+            postalCode:
+              type: string
+
+    RiskScore:
+      type: object
+      properties:
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        riskLevel:
+          type: string
+          enum: [very_low, low, medium, high, very_high]
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              impact:
+                type: string
+                enum: [positive, negative, neutral]
+              weight:
+                type: number
+        recommendation:
+          type: string
+          enum: [approve, review, decline]
+        requiresManualReview:
+          type: boolean
+
+    BatchAnalysisRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/TextAnalysisRequest'
+              - $ref: '#/components/schemas/Transaction'
+        callbackUrl:
+          type: string
+          format: uri
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+
+    BatchJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        itemCount:
+          type: integer
+        estimatedCompletionTime:
+          type: string
+          format: date-time
+        resultsUrl:
+          type: string
+          format: uri
+
+    Report:
+      type: object
+      properties:
+        reportId:
+          type: string
+          format: uuid
+        analysisId:
+          type: string
+          format: uuid
+        generatedAt:
+          type: string
+          format: date-time
+        summary:
+          type: object
+          properties:
+            overallRisk:
+              type: string
+            keyFindings:
+              type: array
+              items:
+                type: string
+            recommendations:
+              type: array
+              items:
+                type: string
+        detailedAnalysis:
+          type: object
+        visualizations:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              title:
+                type: string
+              data:
+                type: object
+
+    WebhookRequest:
+      type: object
+      required: [url, events]
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [analysis.completed, analysis.failed, batch.completed, alert.triggered]
+        secret:
+          type: string
+          description: Secret for HMAC signature validation
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        retryPolicy:
+          type: object
+          properties:
+            maxRetries:
+              type: integer
+              default: 3
+            backoffMultiplier:
+              type: number
+              default: 2
+
+    WebhookSubscription:
+      allOf:
+        - $ref: '#/components/schemas/WebhookRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum: [active, paused, failed]
+            lastDelivery:
+              type: string
+              format: date-time
+            deliveryCount:
+              type: integer
+
+    AsyncJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        statusUrl:
+          type: string
+          format: uri
+        resultsUrl:
+          type: string
+          format: uri
+
+    AnonymizationRequest:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+        fields:
+          type: array
+          items:
+            type: string
+        method:
+          type: string
+          enum: [redact, hash, mask, synthetic]
+          default: redact
+
+    AnonymizedData:
+      type: object
+      properties:
+        data:
+          type: object
+        anonymizationReport:
+          type: object
+          properties:
+            fieldsAnonymized:
+              type: array
+              items:
+                type: string
+            method:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    DeletionResult:
+      type: object
+      properties:
+        userId:
+          type: string
+        recordsDeleted:
+          type: integer
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              status:
+                type: string
+              recordCount:
+                type: integer
+        completedAt:
+          type: string
+          format: date-time
+
+    UserDataExport:
+      type: object
+      properties:
+        userId:
+          type: string
+        exportId:
+          type: string
+          format: uuid
+        data:
+          type: object
+        metadata:
+          type: object
+          properties:
+            exportedAt:
+              type: string
+              format: date-time
+            format:
+              type: string
+            sizeBytes:
+              type: integer
+
+    AuditLog:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              timestamp:
+                type: string
+                format: date-time
+              userId:
+                type: string
+              action:
+                type: string
+              resource:
+                type: string
+              result:
+                type: string
+                enum: [success, failure]
+              metadata:
+                type: object
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            totalPages:
+              type: integer
+            totalRecords:
+              type: integer
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime:
+          type: integer
+        services:
+          type: object
+          additionalProperties:
+            type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+            timestamp:
+              type: string
+              format: date-time
+            traceId:
+              type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

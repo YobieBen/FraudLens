@@ -1,0 +1,107 @@
+{
+  "summary": {
+    "total": 10,
+    "passed": 2,
+    "failed": 8,
+    "pass_rate": 20.0,
+    "timestamp": "2025-08-27T16:22:35.507371"
+  },
+  "features": {
+    "Text Fraud Detection": {
+      "passed": 0,
+      "failed": 3
+    },
+    "Document Analysis": {
+      "passed": 0,
+      "failed": 2
+    },
+    "Image Analysis": {
+      "passed": 0,
+      "failed": 1
+    },
+    "Transaction Monitoring": {
+      "passed": 0,
+      "failed": 1
+    },
+    "Compliance": {
+      "passed": 0,
+      "failed": 1
+    },
+    "UI Performance": {
+      "passed": 2,
+      "failed": 0
+    }
+  },
+  "detailed_results": [
+    {
+      "feature": "Text Fraud Detection",
+      "scenario": "Phishing Email",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:32.922428"
+    },
+    {
+      "feature": "Text Fraud Detection",
+      "scenario": "Legitimate Bank Notice",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:32.923514"
+    },
+    {
+      "feature": "Text Fraud Detection",
+      "scenario": "Nigerian Prince Scam",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:32.924529"
+    },
+    {
+      "feature": "Document Analysis",
+      "scenario": "Passport Verification",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:33.460876"
+    },
+    {
+      "feature": "Document Analysis",
+      "scenario": "Invoice Fraud Check",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:33.462286"
+    },
+    {
+      "feature": "Image Analysis",
+      "scenario": "Deepfake Detection",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:33.976243"
+    },
+    {
+      "feature": "Transaction Monitoring",
+      "scenario": "Suspicious Transaction Detection",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:34.482497"
+    },
+    {
+      "feature": "Compliance",
+      "scenario": "GDPR Compliance Check",
+      "passed": false,
+      "details": "HTTP 404",
+      "timestamp": "2025-08-27T16:22:34.989220"
+    },
+    {
+      "feature": "UI Performance",
+      "scenario": "Page Load Time",
+      "passed": true,
+      "details": "13ms",
+      "timestamp": "2025-08-27T16:22:35.503572"
+    },
+    {
+      "feature": "UI Performance",
+      "scenario": "API Response Time",
+      "passed": true,
+      "details": "3ms",
+      "timestamp": "2025-08-27T16:22:35.506598"
+    }
+  ]
+}

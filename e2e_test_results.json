@@ -1,0 +1,52 @@
+{
+  "summary": {
+    "total": 6,
+    "passed": 1,
+    "failed": 5,
+    "pass_rate": 16.666666666666664
+  },
+  "results": [
+    {
+      "test": "Server Health Check",
+      "passed": true,
+      "status": "\u2705 PASSED",
+      "details": "Server is running",
+      "timestamp": 1756335768.2239082
+    },
+    {
+      "test": "Text Analysis",
+      "passed": false,
+      "status": "\u274c FAILED",
+      "details": "Some tests failed",
+      "timestamp": 1756335769.241786
+    },
+    {
+      "test": "Document Analysis",
+      "passed": false,
+      "status": "\u274c FAILED",
+      "details": "Document analysis tests completed",
+      "timestamp": 1756335770.280758
+    },
+    {
+      "test": "Image Analysis",
+      "passed": false,
+      "status": "\u274c FAILED",
+      "details": "Image analysis tests completed",
+      "timestamp": 1756335771.301746
+    },
+    {
+      "test": "Transaction Monitoring",
+      "passed": false,
+      "status": "\u274c FAILED",
+      "details": "Unexpected response format",
+      "timestamp": 1756335772.343411
+    },
+    {
+      "test": "Compliance Checks",
+      "passed": false,
+      "status": "\u274c FAILED",
+      "details": "Unexpected response format",
+      "timestamp": 1756335773.3519511
+    }
+  ]
+}

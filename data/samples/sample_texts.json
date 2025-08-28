@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "author": "Yobie Benjamin",
+    "date": "2025-08-26 18:34:00 PDT",
+    "description": "Sample text data for fraud detection testing"
+  },
+  "samples": [
+    {
+      "id": "LEGIT-001",
+      "text": "Your order #12345 has been shipped and will arrive by Friday. Track your package at our website.",
+      "label": "legitimate",
+      "category": "shipping_notification"
+    },
+    {
+      "id": "FRAUD-001", 
+      "text": "URGENT! Your account has been compromised. Click this link immediately to secure your funds: bit.ly/scam123",
+      "label": "fraud",
+      "category": "phishing"
+    },
+    {
+      "id": "LEGIT-002",
+      "text": "Thank you for your recent purchase. Your payment of $49.99 has been processed successfully.",
+      "label": "legitimate",
+      "category": "payment_confirmation"
+    },
+    {
+      "id": "FRAUD-002",
+      "text": "Congratulations! You've won $1,000,000! Reply with your SSN and bank details to claim your prize!",
+      "label": "fraud",
+      "category": "lottery_scam"
+    },
+    {
+      "id": "LEGIT-003",
+      "text": "Reminder: Your subscription renewal is coming up next month. No action needed if you wish to continue.",
+      "label": "legitimate",
+      "category": "subscription_reminder"
+    },
+    {
+      "id": "FRAUD-003",
+      "text": "IRS Tax Refund Notice: You have unclaimed refund of $3,458. Verify your identity at irs-refund-gov.fake",
+      "label": "fraud",
+      "category": "tax_scam"
+    },
+    {
+      "id": "SUSPICIOUS-001",
+      "text": "Limited time offer! Get 90% off all products. This exclusive deal expires in 2 hours!",
+      "label": "suspicious",
+      "category": "aggressive_marketing"
+    },
+    {
+      "id": "FRAUD-004",
+      "text": "Your Netflix account will be suspended due to payment failure. Update your payment method here: netflix-security.phish",
+      "label": "fraud",
+      "category": "service_impersonation"
+    },
+    {
+      "id": "LEGIT-004",
+      "text": "Your monthly statement is now available. Log in to your account to view and download.",
+      "label": "legitimate",
+      "category": "account_statement"
+    },
+    {
+      "id": "FRAUD-005",
+      "text": "Act now! Your computer is infected with viruses. Call this number immediately: 1-800-SCAMMER for free tech support.",
+      "label": "fraud",
+      "category": "tech_support_scam"
+    }
+  ]
+}

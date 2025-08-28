@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  fraudlens:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraudlens-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./plugins:/app/plugins
+    environment:
+      - FRAUDLENS_ENV=development
+      - FRAUDLENS_LOG_LEVEL=INFO
+      - FRAUDLENS_MAX_MEMORY_GB=100
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - fraudlens-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import fraudlens; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: fraudlens-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - fraudlens-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: fraudlens-db
+    environment:
+      - POSTGRES_DB=fraudlens
+      - POSTGRES_USER=fraudlens
+      - POSTGRES_PASSWORD=fraudlens_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - fraudlens-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraudlens"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: fraudlens-monitoring
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - fraudlens-network
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fraudlens-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./configs/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    networks:
+      - fraudlens-network
+    restart: unless-stopped
+    depends_on:
+      - monitoring
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  fraudlens-network:
+    driver: bridge

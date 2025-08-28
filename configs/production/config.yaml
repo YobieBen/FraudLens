@@ -1,0 +1,130 @@
+# Production Configuration
+# Author: Yobie Benjamin
+# Date: 2025-08-26 18:34:00 PDT
+
+# System configuration
+system:
+  max_memory_gb: 100
+  max_workers: 20
+  device: mps
+  enable_monitoring: true
+  monitoring_interval: 30.0
+
+# Resource management
+resource_manager:
+  warning_threshold: 0.8
+  critical_threshold: 0.95
+  enable_auto_cleanup: true
+
+# Model configuration
+models:
+  lazy_loading: true
+  cache_enabled: true
+  max_cache_size: 10
+  quantization:
+    enabled: true
+    default_type: int4  # More aggressive quantization in production
+  registry_dir: /opt/fraudlens/models
+
+# Pipeline configuration
+pipeline:
+  batch_size: 64
+  timeout_seconds: 30.0
+  max_queue_size: 5000
+  enable_caching: true
+
+# Detection thresholds
+detection:
+  fraud_threshold: 0.6
+  confidence_threshold: 0.8
+  max_detectors_per_modality: 5
+
+# Modality-specific settings
+modalities:
+  text:
+    enabled: true
+    max_length: 5000
+    preprocessing:
+      - lowercase
+      - remove_special_chars
+      - tokenize
+  
+  image:
+    enabled: true
+    max_size_mb: 25
+    target_size: [224, 224]
+    formats: [jpg, png, jpeg]
+  
+  pdf:
+    enabled: true
+    max_pages: 50
+    extract_images: true
+    extract_text: true
+  
+  video:
+    enabled: true
+    max_duration_seconds: 120
+    sample_rate: 0.5
+  
+  audio:
+    enabled: true
+    max_duration_seconds: 300
+    sample_rate: 16000
+
+# Plugin configuration
+plugins:
+  enabled: true
+  auto_discover: false  # Manual control in production
+  plugin_dirs:
+    - /opt/fraudlens/plugins
+  
+# API configuration
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 8
+  cors_enabled: false
+  rate_limit:
+    enabled: true
+    requests_per_minute: 1000
+
+# Logging configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: /var/log/fraudlens/fraudlens.log
+  max_bytes: 52428800  # 50MB
+  backup_count: 10
+  console_output: false
+
+# Database configuration
+database:
+  enabled: true
+  url: postgresql://user:pass@localhost/fraudlens
+  pool_size: 20
+  echo: false
+
+# Telemetry configuration
+telemetry:
+  enabled: true
+  endpoint: https://telemetry.fraudlens.io
+  api_key: ${TELEMETRY_API_KEY}
+  sample_rate: 0.01
+
+# Security configuration
+security:
+  enable_auth: true
+  jwt_secret: ${JWT_SECRET}
+  token_expiry_hours: 12
+  allowed_file_extensions:
+    - .txt
+    - .pdf
+    - .jpg
+    - .png
+
+# Feature flags
+features:
+  experimental_models: false
+  plugin_marketplace: false
+  distributed_processing: true
+  auto_model_updates: true

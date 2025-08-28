@@ -1,0 +1,136 @@
+# Development Configuration
+# Author: Yobie Benjamin
+# Date: 2025-08-26 18:34:00 PDT
+
+# System configuration
+system:
+  max_memory_gb: 100
+  max_workers: 10
+  device: mps  # mps for Apple Silicon, cuda for NVIDIA, cpu for CPU-only
+  enable_monitoring: true
+  monitoring_interval: 5.0
+
+# Resource management
+resource_manager:
+  warning_threshold: 0.7
+  critical_threshold: 0.9
+  enable_auto_cleanup: true
+
+# Model configuration
+models:
+  lazy_loading: true
+  cache_enabled: true
+  max_cache_size: 5
+  quantization:
+    enabled: true
+    default_type: int8
+  registry_dir: models/registry
+
+# Pipeline configuration
+pipeline:
+  batch_size: 32
+  timeout_seconds: 60.0
+  max_queue_size: 1000
+  enable_caching: true
+
+# Detection thresholds
+detection:
+  fraud_threshold: 0.5
+  confidence_threshold: 0.7
+  max_detectors_per_modality: 3
+
+# Modality-specific settings
+modalities:
+  text:
+    enabled: true
+    max_length: 10000
+    preprocessing:
+      - lowercase
+      - remove_special_chars
+      - tokenize
+  
+  image:
+    enabled: true
+    max_size_mb: 50
+    target_size: [224, 224]
+    formats: [jpg, png, jpeg, webp]
+  
+  pdf:
+    enabled: true
+    max_pages: 100
+    extract_images: true
+    extract_text: true
+  
+  video:
+    enabled: false
+    max_duration_seconds: 300
+    sample_rate: 1  # frames per second
+  
+  audio:
+    enabled: false
+    max_duration_seconds: 600
+    sample_rate: 16000
+
+# Plugin configuration
+plugins:
+  enabled: true
+  auto_discover: true
+  plugin_dirs:
+    - plugins
+    - ~/.fraudlens/plugins
+  
+# API configuration
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  cors_enabled: true
+  cors_origins:
+    - http://localhost:3000
+    - http://localhost:8080
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+
+# Logging configuration
+logging:
+  level: DEBUG
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/fraudlens.log
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+  console_output: true
+
+# Database configuration (optional)
+database:
+  enabled: false
+  url: sqlite:///fraudlens.db
+  pool_size: 10
+  echo: false
+
+# Telemetry configuration
+telemetry:
+  enabled: false
+  endpoint: null
+  api_key: null
+  sample_rate: 0.1
+
+# Security configuration
+security:
+  enable_auth: false
+  jwt_secret: development-secret-key-change-in-production
+  token_expiry_hours: 24
+  allowed_file_extensions:
+    - .txt
+    - .pdf
+    - .jpg
+    - .png
+    - .mp4
+    - .wav
+
+# Feature flags
+features:
+  experimental_models: true
+  plugin_marketplace: false
+  distributed_processing: false
+  auto_model_updates: false

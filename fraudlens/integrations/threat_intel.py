@@ -12,6 +12,8 @@ import asyncio
 import hashlib
 import json
 import re
+import ssl
+import certifi
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urlparse
@@ -128,6 +130,11 @@ class ThreatIntelligenceManager:
         
         logger.info(f"ThreatIntelligenceManager initialized with {len(self.feeds)} feeds")
     
+    @property
+    def threat_feeds(self):
+        """Alias for feeds to maintain compatibility."""
+        return self.feeds
+    
     async def initialize(self) -> None:
         """Initialize and fetch initial threat data."""
         await self.update_threat_feeds()
@@ -147,7 +154,20 @@ class ThreatIntelligenceManager:
     async def _fetch_feed(self, feed_name: str, feed_config: Dict) -> bool:
         """Fetch data from a specific threat feed."""
         try:
-            async with aiohttp.ClientSession() as session:
+            # Create SSL context with proper certificate validation
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
+            ssl_context.check_hostname = True
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            
+            # For some feeds, we may need to be less strict
+            if feed_name in ["openphish", "spamhaus_dbl"]:
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+            
+            # Create connector with SSL context
+            connector = aiohttp.TCPConnector(ssl=ssl_context)
+            
+            async with aiohttp.ClientSession(connector=connector) as session:
                 headers = {}
                 if feed_config["auth"]:
                     headers["X-OTX-API-KEY"] = feed_config["auth"]
@@ -409,6 +429,18 @@ class ThreatIntelligenceManager:
             "known_bad_hashes": len(self.known_bad_hashes),
             "feeds_configured": len(self.feeds),
             "last_updated": datetime.now().isoformat()
+        }
+    
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get threat intelligence statistics."""
+        return {
+            "urls_checked": len(self.known_bad_urls),
+            "domains_blacklisted": len(self.known_bad_domains),
+            "ips_blacklisted": len(self.known_bad_ips),
+            "threats_detected": len(self.known_bad_urls) + len(self.known_bad_domains),
+            "active_feeds": len([f for f in self.feeds.values() if f.get("enabled", True)]),
+            "last_update": datetime.now().isoformat(),
+            "feeds_configured": len(self.feeds)
         }
     
     async def cleanup(self) -> None:

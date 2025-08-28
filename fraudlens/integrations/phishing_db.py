@@ -89,6 +89,7 @@ class PhishingDatabaseConnector:
         # Cache for known phishing sites
         self.phishing_cache: Dict[str, PhishingIndicator] = {}
         self.cache_ttl = timedelta(hours=6)
+        self.known_phishing_domains = set()
         
         # Target brands often impersonated
         self.target_brands = {
@@ -266,6 +267,40 @@ class PhishingDatabaseConnector:
             "target_brand": brand_result.get("target_brand"),
             "recommendations": self._get_recommendations(confidence, threats)
         }
+    
+    async def check_domain(self, domain: str) -> bool:
+        """
+        Check if a domain is suspicious or blacklisted.
+        
+        Args:
+            domain: Domain name to check
+            
+        Returns:
+            True if suspicious, False otherwise
+        """
+        # Check against known phishing domains
+        if domain in self.known_phishing_domains:
+            return True
+        
+        # Check for suspicious patterns
+        suspicious_patterns = [
+            r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}",  # IP address
+            r".*\.(tk|ml|ga|cf)$",  # High-risk TLDs
+            r"[0-9]+-[0-9]+",  # Numbers with dashes
+            r"(secure|verify|account|update).*\.(com|net|org)",  # Phishing keywords
+        ]
+        
+        for pattern in suspicious_patterns:
+            if re.search(pattern, domain, re.IGNORECASE):
+                return True
+        
+        # Check for brand impersonation
+        for brand, variations in self.target_brands.items():
+            for variation in variations:
+                if variation in domain.lower() and brand not in domain.lower():
+                    return True
+        
+        return False
     
     def _check_patterns(self, url: str) -> Dict[str, Any]:
         """Check URL against suspicious patterns."""

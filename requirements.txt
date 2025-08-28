@@ -7,6 +7,7 @@ numpy==1.26.4
 scipy==1.13.1
 pandas==2.2.2
 scikit-learn==1.5.1
+certifi==2024.8.30
 
 # Async and concurrency
 asyncio-mqtt==0.16.2

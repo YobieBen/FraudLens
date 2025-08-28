@@ -162,6 +162,7 @@ jobs:
           context: .
           push: false
           tags: fraudlens:latest
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
       

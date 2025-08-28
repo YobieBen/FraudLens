@@ -19,6 +19,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from PIL import Image
+from loguru import logger
 
 from fraudlens.core.config import Config
 from fraudlens.core.pipeline import FraudDetectionPipeline
@@ -163,9 +164,9 @@ class FraudLensDemo:
             # Create details
             details = {
                 "analysis_type": analysis_type,
-                "confidence": detection.confidence,
-                "fraud_indicators": detection.evidence.get("indicators", []),
-                "processing_time_ms": latency_ms,
+                "confidence": f"{100-fraud_score:.1f}%",
+                "fraud_indicators": result.fraud_types if hasattr(result, 'fraud_types') else [],
+                "processing_time_ms": f"{latency_ms:.1f}",
             }
             
             # Create annotated image (simplified)
@@ -238,7 +239,15 @@ class FraudLensDemo:
                 
                 # Add detected fraud types if any
                 if hasattr(result, 'fraud_types') and result.fraud_types:
-                    explanation += f"\n\n⚠️ Issues Found: {', '.join(result.fraud_types)}"
+                    # Convert FraudType enums to strings
+                    fraud_type_strings = []
+                    for ft in result.fraud_types:
+                        if hasattr(ft, 'value'):
+                            fraud_type_strings.append(ft.value)
+                        else:
+                            fraud_type_strings.append(str(ft))
+                    if fraud_type_strings:
+                        explanation += f"\n\n⚠️ Issues Found: {', '.join(fraud_type_strings)}"
                 
                 # Record metrics
                 latency_ms = (time.time() - start_time) * 1000
@@ -261,7 +270,7 @@ class FraudLensDemo:
                         "Format validation",
                         "OCR text extraction"
                     ],
-                    "fraud_indicators": result.fraud_types if hasattr(result, 'fraud_types') else []
+                    "fraud_indicators": fraud_type_strings if 'fraud_type_strings' in locals() else []
                 }
             else:
                 fraud_score = 0.0

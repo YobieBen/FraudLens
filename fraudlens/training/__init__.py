@@ -8,6 +8,6 @@ from .feedback_loop import FeedbackLoop
 
 __all__ = [
     "KnownFakeDatabase",
-    "FineTuner", 
+    "FineTuner",
     "FeedbackLoop"
 ]

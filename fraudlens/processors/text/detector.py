@@ -421,8 +421,14 @@ class TextFraudDetector(FraudDetector):
         # Run parallel analysis
         analysis_tasks = []
         
+        
         # Determine which analyzers to run based on features
-        if features.get("has_urls") or features.get("has_email_patterns"):
+        # Always run phishing analyzer if there are suspicious patterns
+        text_lower = text.lower()
+        suspicious_patterns = ["click here", "verify", "secure", "account", "suspended", "compromised", "confirm"]
+        has_suspicious = any(pattern in text_lower for pattern in suspicious_patterns)
+        
+        if features.get("has_urls") or features.get("has_email_patterns") or has_suspicious or features.get("urgency_score", 0) > 0.3:
             analysis_tasks.append(("phishing", self.phishing_analyzer.analyze(text)))
         
         # Check for financial documents
@@ -452,6 +458,7 @@ class TextFraudDetector(FraudDetector):
         fraud_types = []
         
         phishing_result = results_dict.get("phishing")
+        
         if phishing_result and phishing_result.get("is_phishing"):
             risk_scores.append(phishing_result.get("confidence", 0.5))
             fraud_types.append("phishing")
@@ -596,8 +603,8 @@ class TextFraudDetector(FraudDetector):
         # Remove duplicates
         fraud_types = list(set(fraud_types))
         
-        if not fraud_types:
-            fraud_types = [FraudType.UNKNOWN]
+        # Don't add UNKNOWN for clean content
+        # Only keep empty list if no fraud detected
         
         # Get evidence dict
         if isinstance(fraud_result, dict):

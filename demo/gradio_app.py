@@ -106,9 +106,9 @@ class FraudLensDemo:
             
             # Create details
             details = {
-                "confidence": detection.confidence,
-                "fraud_types": [ft.value for ft in detection.fraud_types],
-                "evidence": detection.evidence,
+                "confidence": result.confidence if hasattr(result, 'confidence') else fraud_score,
+                "fraud_types": result.fraud_types if hasattr(result, 'fraud_types') else [],
+                "evidence": result.evidence if hasattr(result, 'evidence') else {},
                 "processing_time_ms": latency_ms,
             }
         else:

@@ -1,0 +1,87 @@
+{
+  "text_fraud": [
+    {
+      "test_case": "Classic phishing attempt",
+      "input": "Your account has been compromised. Click here to s...",
+      "expected_fraud": true,
+      "detected_fraud": true,
+      "fraud_score": 0.8,
+      "confidence": 0.9,
+      "fraud_types": [
+        "FraudType.PHISHING"
+      ],
+      "correct": true,
+      "processing_time_ms": 1.9028186798095703
+    },
+    {
+      "test_case": "Lottery scam",
+      "input": "Congratulations! You've won $1,000,000! Click here...",
+      "expected_fraud": true,
+      "detected_fraud": true,
+      "fraud_score": 0.9,
+      "confidence": 0.9,
+      "fraud_types": [
+        "FraudType.PHISHING"
+      ],
+      "correct": true,
+      "processing_time_ms": 0.3159046173095703
+    },
+    {
+      "test_case": "Nigerian prince scam",
+      "input": "Dear Sir/Madam, I am a Nigerian prince with $50 mi...",
+      "expected_fraud": true,
+      "detected_fraud": true,
+      "fraud_score": 0.9,
+      "confidence": 0.9,
+      "fraud_types": [
+        "FraudType.SCAM"
+      ],
+      "correct": true,
+      "processing_time_ms": 0.11515617370605469
+    },
+    {
+      "test_case": "Identity theft attempt",
+      "input": "Please provide your SSN and date of birth to verif...",
+      "expected_fraud": true,
+      "detected_fraud": true,
+      "fraud_score": 0.85,
+      "confidence": 0.9,
+      "fraud_types": [
+        "FraudType.IDENTITY_THEFT",
+        "FraudType.PHISHING"
+      ],
+      "correct": true,
+      "processing_time_ms": 0.12421607971191406
+    },
+    {
+      "test_case": "Legitimate business email",
+      "input": "This is a normal business email about the upcoming...",
+      "expected_fraud": false,
+      "detected_fraud": false,
+      "fraud_score": 0.0,
+      "confidence": 0.9,
+      "fraud_types": [],
+      "correct": true,
+      "processing_time_ms": 0.13899803161621094
+    },
+    {
+      "test_case": "Legitimate invoice",
+      "input": "Invoice #12345 for services rendered. Payment due ...",
+      "expected_fraud": false,
+      "detected_fraud": false,
+      "fraud_score": 0.0,
+      "confidence": 0.9,
+      "fraud_types": [],
+      "correct": true,
+      "processing_time_ms": 0.16260147094726562
+    }
+  ],
+  "known_fakes": {
+    "mclovin_detected": false
+  },
+  "integrations": {
+    "threat_intel": "failed",
+    "phishing_db": "failed",
+    "document_validator": "failed"
+  }
+}

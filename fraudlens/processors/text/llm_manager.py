@@ -197,21 +197,8 @@ class LLMManager:
         Returns:
             Explanation text
         """
-        prompt = self._build_explanation_prompt(findings)
-        
-        if self.primary_model:
-            try:
-                response = await self._generate(
-                    self.primary_model,
-                    prompt,
-                    self.primary_config,
-                    max_tokens=256
-                )
-                return self._clean_explanation(response)
-            except:
-                pass
-        
-        # Generate simple explanation without LLM
+        # Since LLM is not available, always use simple explanation
+        # This ensures we get consistent, readable explanations
         return self._generate_simple_explanation(findings)
     
     def _build_prompt(
@@ -462,9 +449,9 @@ Provide a 2-3 sentence explanation suitable for a security analyst."""
         # Clean up whitespace
         text = ' '.join(text.split())
         
-        # If empty after cleaning, use default
+        # If empty after cleaning, return empty to trigger fallback
         if not text.strip():
-            return "Analysis detected potential fraud indicators."
+            return ""
         
         # Limit length
         if len(text) > 500:

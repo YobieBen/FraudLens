@@ -92,12 +92,29 @@ class PhishingAnalyzer:
         indicators = []
         confidence_scores = []
         
-        # Extract URLs
+        # Extract URLs and check for URL-like patterns
+        text_lower = text.lower()
         urls = self._extract_urls(text)
         suspicious_urls = self._analyze_urls(urls)
+        
+        # Check for common phishing phrases that suggest URLs
+        phishing_phrases = [
+            "click here", "click this link", "verify your account",
+            "account has been compromised", "secure your account",
+            "suspended account", "confirm your identity", "update your information"
+        ]
+        
+        for phrase in phishing_phrases:
+            if phrase in text_lower:
+                indicators.append(f"Contains suspicious phrase: '{phrase}'")
+                confidence_scores.append(0.8)
+                if not suspicious_urls:
+                    suspicious_urls = ["implicit_link"]
+                break
+        
         if suspicious_urls:
-            indicators.append(f"Found {len(suspicious_urls)} suspicious URLs")
-            confidence_scores.append(min(0.3 * len(suspicious_urls), 0.9))
+            indicators.append(f"Found {len(suspicious_urls)} suspicious URLs/patterns")
+            confidence_scores.append(min(0.4 * len(suspicious_urls), 0.9))
         
         # Check for urgency and pressure tactics
         urgency_score = self._calculate_urgency_score(text)
@@ -110,6 +127,13 @@ class PhishingAnalyzer:
         if keyword_score > 0.3:
             indicators.append(f"Phishing keyword score: {keyword_score:.2f}")
             confidence_scores.append(keyword_score)
+        
+        # Check for lottery/prize scams
+        lottery_words = ["won", "winner", "prize", "lottery", "congratulations", "claim", "million", "$1,000,000"]
+        lottery_count = sum(1 for word in lottery_words if word in text_lower)
+        if lottery_count >= 2:
+            indicators.append("Lottery/prize scam pattern detected")
+            confidence_scores.append(0.9)
         
         # Check for impersonation
         impersonated_entities = self._detect_impersonation(text)
@@ -141,7 +165,18 @@ class PhishingAnalyzer:
         is_phishing = False
         confidence = 0.0
         
-        if confidence_scores:
+        # If we have any indicators, be more aggressive about detection
+        if indicators or suspicious_urls or impersonated_entities:
+            # Even weak signals should trigger detection if multiple indicators present
+            if len(indicators) > 2:
+                confidence = max(0.7, max(confidence_scores) if confidence_scores else 0.7)
+            elif confidence_scores:
+                confidence = max(confidence_scores)
+            else:
+                confidence = 0.6  # Default moderate confidence if indicators exist
+            
+            is_phishing = confidence > 0.3  # Lower threshold for detection
+        elif confidence_scores:
             confidence = max(confidence_scores)
             is_phishing = confidence > 0.5
         

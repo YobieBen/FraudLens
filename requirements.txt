@@ -27,7 +27,7 @@ py-cpuinfo==9.0.0
 # mlx==0.16.0  # Uncomment for Apple Silicon
 
 # Model formats
-onnx==1.16.2
+onnx==1.19.0
 onnxruntime==1.19.2
 safetensors==0.4.4
 

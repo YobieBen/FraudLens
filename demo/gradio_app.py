@@ -695,6 +695,301 @@ def create_interface():
                     outputs=performance_chart,
                 )
             
+            # Email Monitor Tab
+            with gr.TabItem("📧 Email Monitor"):
+                # Email monitoring console
+                gr.Markdown(
+                    """
+                    ## 📧 Gmail Fraud Detection Console
+                    Monitor and manage email fraud detection in real-time.
+                    """
+                )
+                
+                with gr.Row():
+                    # Connection status
+                    with gr.Column(scale=1):
+                        gmail_status = gr.Markdown("🔴 **Gmail Status:** Not Connected")
+                        connect_btn = gr.Button("🔗 Connect to Gmail", variant="primary")
+                        disconnect_btn = gr.Button("🔌 Disconnect", variant="stop", visible=False)
+                        
+                        gr.Markdown("---")
+                        
+                        # Quick stats
+                        stats_display = gr.Markdown(
+                            """
+                            **📊 Statistics:**
+                            - Total Processed: 0
+                            - Fraud Detected: 0
+                            - Fraud Rate: 0%
+                            - Monitoring: Inactive
+                            """
+                        )
+                    
+                    # Main console
+                    with gr.Column(scale=3):
+                        with gr.Tabs():
+                            with gr.TabItem("📥 Inbox Scanner"):
+                                # Scan controls
+                                with gr.Row():
+                                    email_query = gr.Textbox(
+                                        label="Gmail Query",
+                                        value="is:unread",
+                                        placeholder="e.g., is:unread, from:noreply, has:attachment",
+                                    )
+                                    max_emails = gr.Slider(
+                                        minimum=1,
+                                        maximum=100,
+                                        value=20,
+                                        step=1,
+                                        label="Max Emails",
+                                    )
+                                    process_attachments = gr.Checkbox(
+                                        label="Process Attachments",
+                                        value=True,
+                                    )
+                                
+                                with gr.Row():
+                                    scan_btn = gr.Button("🔍 Scan Emails", variant="primary")
+                                    export_btn = gr.Button("📥 Export Results")
+                                
+                                # Results display
+                                scan_output = gr.HTML(
+                                    label="Scan Results",
+                                    value="<div style='padding: 20px; text-align: center; color: #666;'>No scan results yet. Click 'Scan Emails' to start.</div>"
+                                )
+                            
+                            with gr.TabItem("🔄 Live Monitor"):
+                                # Monitoring controls
+                                with gr.Row():
+                                    monitor_query = gr.Textbox(
+                                        label="Monitor Query",
+                                        value="is:unread",
+                                        placeholder="Gmail query for monitoring",
+                                    )
+                                    check_interval = gr.Slider(
+                                        minimum=10,
+                                        maximum=300,
+                                        value=60,
+                                        step=10,
+                                        label="Check Interval (seconds)",
+                                    )
+                                    auto_action = gr.Checkbox(
+                                        label="Auto-Action on Fraud",
+                                        value=False,
+                                    )
+                                
+                                with gr.Row():
+                                    start_monitor_btn = gr.Button("▶️ Start Monitoring", variant="primary")
+                                    stop_monitor_btn = gr.Button("⏸️ Stop Monitoring", variant="stop")
+                                
+                                # Live console
+                                monitor_console = gr.Textbox(
+                                    label="Live Monitor Console",
+                                    lines=15,
+                                    max_lines=20,
+                                    value="Console output will appear here...\n",
+                                    interactive=False,
+                                )
+                                
+                                monitor_status = gr.Markdown("⏸️ **Monitor Status:** Inactive")
+                            
+                            with gr.TabItem("⚙️ Settings"):
+                                gr.Markdown(
+                                    """
+                                    ### Email Action Configuration
+                                    Configure automatic actions for fraudulent emails.
+                                    """
+                                )
+                                
+                                with gr.Row():
+                                    with gr.Column():
+                                        fraud_threshold = gr.Slider(
+                                            minimum=0.0,
+                                            maximum=1.0,
+                                            value=0.7,
+                                            step=0.05,
+                                            label="Fraud Detection Threshold",
+                                        )
+                                        
+                                        flag_threshold = gr.Slider(
+                                            minimum=0.0,
+                                            maximum=1.0,
+                                            value=0.5,
+                                            step=0.05,
+                                            label="Flag Threshold",
+                                        )
+                                        
+                                        spam_threshold = gr.Slider(
+                                            minimum=0.0,
+                                            maximum=1.0,
+                                            value=0.7,
+                                            step=0.05,
+                                            label="Spam Threshold",
+                                        )
+                                        
+                                        trash_threshold = gr.Slider(
+                                            minimum=0.0,
+                                            maximum=1.0,
+                                            value=0.95,
+                                            step=0.05,
+                                            label="Trash Threshold",
+                                        )
+                                    
+                                    with gr.Column():
+                                        # Configuration display
+                                        config_display = gr.JSON(
+                                            label="Current Configuration",
+                                            value={
+                                                "fraud_threshold": 0.7,
+                                                "action_thresholds": {
+                                                    "flag": 0.5,
+                                                    "spam": 0.7,
+                                                    "trash": 0.95,
+                                                },
+                                                "auto_action": False,
+                                            }
+                                        )
+                                        
+                                        update_config_btn = gr.Button("💾 Update Configuration", variant="primary")
+                                        config_status = gr.Markdown("")
+                
+                # Email monitoring functions (demo implementation)
+                def demo_connect_gmail():
+                    """Demo Gmail connection."""
+                    return (
+                        "🟢 **Gmail Status:** Connected (Demo Mode)",
+                        gr.update(visible=False),  # Hide connect button
+                        gr.update(visible=True),   # Show disconnect button
+                        """
+                        **📊 Statistics:**
+                        - Total Processed: 0
+                        - Fraud Detected: 0
+                        - Fraud Rate: 0%
+                        - Monitoring: Ready
+                        """
+                    )
+                
+                def demo_disconnect_gmail():
+                    """Demo Gmail disconnection."""
+                    return (
+                        "🔴 **Gmail Status:** Not Connected",
+                        gr.update(visible=True),   # Show connect button
+                        gr.update(visible=False),  # Hide disconnect button
+                        """
+                        **📊 Statistics:**
+                        - Total Processed: 0
+                        - Fraud Detected: 0
+                        - Fraud Rate: 0%
+                        - Monitoring: Inactive
+                        """
+                    )
+                
+                def demo_scan_emails(query, max_results, process_attachments):
+                    """Demo email scanning."""
+                    import random
+                    from datetime import datetime, timedelta
+                    
+                    # Generate demo results
+                    results_html = """
+                    <div style='padding: 10px;'>
+                        <h3>📧 Scan Results</h3>
+                        <table style='width: 100%; border-collapse: collapse;'>
+                            <thead>
+                                <tr style='background: #f0f0f0;'>
+                                    <th style='padding: 8px; text-align: left;'>Subject</th>
+                                    <th style='padding: 8px; text-align: left;'>From</th>
+                                    <th style='padding: 8px; text-align: left;'>Score</th>
+                                    <th style='padding: 8px; text-align: left;'>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    """
+                    
+                    sample_emails = [
+                        ("Urgent: Verify your account", "noreply@suspicious.com", 0.89, "spam", "#ff6b6b"),
+                        ("Meeting tomorrow at 2 PM", "colleague@company.com", 0.12, "none", "#51cf66"),
+                        ("You've won $1,000,000!", "lottery@scam.net", 0.95, "trash", "#ff4757"),
+                        ("Invoice #12345", "billing@vendor.com", 0.08, "none", "#51cf66"),
+                        ("Security Alert", "security@bank-fake.com", 0.78, "flag", "#ffa502"),
+                    ]
+                    
+                    for subject, sender, score, action, color in sample_emails[:max_results]:
+                        results_html += f"""
+                        <tr>
+                            <td style='padding: 8px;'>{subject}</td>
+                            <td style='padding: 8px;'>{sender}</td>
+                            <td style='padding: 8px; color: {color}; font-weight: bold;'>{score:.0%}</td>
+                            <td style='padding: 8px;'>{action}</td>
+                        </tr>
+                        """
+                    
+                    results_html += """
+                            </tbody>
+                        </table>
+                        <p style='margin-top: 10px; color: #666;'>
+                            Processed {0} emails • Found {1} suspicious • Query: "{2}"
+                        </p>
+                    </div>
+                    """.format(
+                        len(sample_emails[:max_results]),
+                        sum(1 for _, _, score, _, _ in sample_emails[:max_results] if score > 0.5),
+                        query
+                    )
+                    
+                    return results_html
+                
+                def demo_start_monitoring(query, interval, auto_action):
+                    """Demo start monitoring."""
+                    from datetime import datetime
+                    console_text = f"""[{datetime.now().strftime('%H:%M:%S')}] Starting email monitoring...
+[{datetime.now().strftime('%H:%M:%S')}] Query: {query}
+[{datetime.now().strftime('%H:%M:%S')}] Check interval: {interval} seconds
+[{datetime.now().strftime('%H:%M:%S')}] Auto-action: {'Enabled' if auto_action else 'Disabled'}
+[{datetime.now().strftime('%H:%M:%S')}] Monitoring active...
+
+[{datetime.now().strftime('%H:%M:%S')}] Checking for new emails...
+[{datetime.now().strftime('%H:%M:%S')}] Found 3 new emails
+[{datetime.now().strftime('%H:%M:%S')}] Analyzing: "Urgent: Account verification required"
+[{datetime.now().strftime('%H:%M:%S')}] ⚠️ FRAUD DETECTED - Score: 0.87 (phishing)
+[{datetime.now().strftime('%H:%M:%S')}] Action: Moved to spam
+[{datetime.now().strftime('%H:%M:%S')}] Analyzing: "Team meeting notes"
+[{datetime.now().strftime('%H:%M:%S')}] ✅ Clean - Score: 0.15
+[{datetime.now().strftime('%H:%M:%S')}] Waiting for next check...
+"""
+                    return console_text, "🟢 **Monitor Status:** Active"
+                
+                def demo_stop_monitoring():
+                    """Demo stop monitoring."""
+                    return "Console output will appear here...\n", "⏸️ **Monitor Status:** Inactive"
+                
+                # Wire up the demo functions
+                connect_btn.click(
+                    demo_connect_gmail,
+                    outputs=[gmail_status, connect_btn, disconnect_btn, stats_display]
+                )
+                
+                disconnect_btn.click(
+                    demo_disconnect_gmail,
+                    outputs=[gmail_status, connect_btn, disconnect_btn, stats_display]
+                )
+                
+                scan_btn.click(
+                    demo_scan_emails,
+                    inputs=[email_query, max_emails, process_attachments],
+                    outputs=scan_output
+                )
+                
+                start_monitor_btn.click(
+                    demo_start_monitoring,
+                    inputs=[monitor_query, check_interval, auto_action],
+                    outputs=[monitor_console, monitor_status]
+                )
+                
+                stop_monitor_btn.click(
+                    demo_stop_monitoring,
+                    outputs=[monitor_console, monitor_status]
+                )
+            
             # API Playground Tab
             with gr.TabItem("🔧 API Playground"):
                 gr.Markdown(

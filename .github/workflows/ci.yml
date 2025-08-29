@@ -8,6 +8,16 @@ on:
   schedule:
     - cron: '0 0 * * 0'  # Weekly security scan
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  security-events: write
+  actions: read
+  checks: write
+  issues: write
+  pull-requests: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -174,7 +184,7 @@ jobs:
           output: 'trivy-results.sarif'
       
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -202,10 +212,11 @@ jobs:
           make html
       
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/html
+          publish_dir: ./docs/build/html
+          force_orphan: true
 
   release:
     runs-on: ubuntu-latest

@@ -218,13 +218,46 @@ def get_detectors():
         video_detector = VideoFraudDetector()
         # VideoFraudDetector doesn't have initialize method
     else:
-        video_detector = type('VideoFraudDetector', (), {
-            'detect': lambda self, x: asyncio.coroutine(lambda: type('obj', (), {
-                'is_deepfake': False, 'confidence': 0.85,
-                'frame_analysis': {'total_frames': 0, 'suspicious_frames': 0},
-                'techniques_detected': []
-            })())()
-        })()
+        # Create mock video detector with proper analyze_video method
+        from types import SimpleNamespace
+        import random
+        
+        async def mock_analyze_video(video_path, sample_rate=10, max_frames=100):
+            # Simulate video analysis with realistic results
+            is_fraud = random.random() > 0.7  # 30% chance of detecting fraud
+            
+            # Create mock fraud types enum values
+            fraud_types = []
+            if is_fraud:
+                # Create mock fraud type objects
+                fraud_types = [
+                    SimpleNamespace(value='deepfake'),
+                    SimpleNamespace(value='temporal_inconsistency')
+                ]
+            
+            return SimpleNamespace(
+                is_fraudulent=is_fraud,
+                confidence=random.uniform(0.6, 0.95) if is_fraud else random.uniform(0.1, 0.4),
+                fraud_types=fraud_types,
+                frame_scores=[random.random() for _ in range(10)],
+                temporal_consistency=random.uniform(0.7, 0.95),
+                facial_landmarks_score=random.uniform(0.5, 0.9),
+                frequency_analysis_score=random.uniform(0.2, 0.6),
+                compression_score=random.uniform(0.1, 0.5),
+                deepfake_probability=random.uniform(0.6, 0.9) if is_fraud else random.uniform(0.1, 0.3),
+                manipulation_regions=[],
+                suspicious_frames=[i for i in range(1, 100, 15)] if is_fraud else [],
+                explanation="Demo mode: This is a simulated analysis result." + 
+                           (" Deepfake indicators detected in facial regions." if is_fraud else " No significant anomalies detected."),
+                metadata={
+                    'total_frames': 240,
+                    'analyzed_frames': 48,
+                    'sample_rate': sample_rate,
+                    'fps': 30
+                }
+            )
+        
+        video_detector = SimpleNamespace(analyze_video=mock_analyze_video)
     
     if HAS_FRAUDLENS and DocumentValidator:
         doc_validator = DocumentValidator()
@@ -396,30 +429,71 @@ with tab3:
             
             if st.button("🔍 Analyze Video", type="primary"):
                 with st.spinner("🤖 Analyzing video for deepfakes... This may take a moment."):
-                    # Save video temporarily
-                    temp_path = f"/tmp/{uploaded_video.name}"
-                    with open(temp_path, 'wb') as f:
-                        f.write(uploaded_video.getbuffer())
+                    try:
+                        # Save video temporarily
+                        import tempfile
+                        import os
+                        
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_video.name)[1]) as tmp_file:
+                            tmp_file.write(uploaded_video.getbuffer())
+                            temp_path = tmp_file.name
+                        
+                        # Analyze video
+                        result = asyncio.run(video_detector.analyze_video(temp_path, sample_rate=5, max_frames=100))
+                        
+                        # Clean up temp file
+                        os.unlink(temp_path)
+                        
+                        # Store result in session state
+                        st.session_state.video_result = result
+                        
+                    except Exception as e:
+                        st.error(f"Error analyzing video: {str(e)}")
+                        st.session_state.video_result = None
+        
+        # Display results outside button context
+        if 'video_result' in st.session_state and st.session_state.video_result:
+            result = st.session_state.video_result
+            
+            with col2:
+                if result.is_fraudulent:
+                    st.markdown('<div class="danger-box"><h4>⚠️ FRAUD DETECTED</h4></div>', unsafe_allow_html=True)
                     
-                    result = asyncio.run(video_detector.detect(temp_path))
+                    # Show fraud types
+                    if result.fraud_types:
+                        fraud_types_str = ', '.join([ft.value for ft in result.fraud_types])
+                        st.error(f"**Fraud Types:** {fraud_types_str}")
+                else:
+                    st.markdown('<div class="success-box"><h4>✅ Video Appears Authentic</h4></div>', unsafe_allow_html=True)
                 
-                with col2:
-                    if result.is_deepfake:
-                        st.markdown('<div class="danger-box"><h4>⚠️ DEEPFAKE DETECTED</h4></div>', unsafe_allow_html=True)
-                    else:
-                        st.markdown('<div class="success-box"><h4>✅ Video Appears Authentic</h4></div>', unsafe_allow_html=True)
+                # Metrics
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.metric("Overall Confidence", f"{result.confidence:.1%}")
+                    st.metric("Deepfake Score", f"{result.deepfake_probability:.1%}")
+                with col_b:
+                    st.metric("Temporal Consistency", f"{result.temporal_consistency:.1%}")
+                    st.metric("Compression Artifacts", f"{result.compression_score:.1%}")
+                
+                # Detailed analysis
+                with st.expander("📊 Detailed Analysis"):
+                    st.write("**Frame Analysis:**")
+                    st.write(f"- Total frames: {result.metadata.get('total_frames', 0)}")
+                    st.write(f"- Analyzed frames: {result.metadata.get('analyzed_frames', 0)}")
+                    st.write(f"- Suspicious frames: {len(result.suspicious_frames)}")
                     
-                    # Metrics
-                    st.metric("Deepfake Confidence", f"{result.confidence:.1%}")
+                    if result.suspicious_frames:
+                        st.warning(f"Suspicious frames detected at: {', '.join(map(str, result.suspicious_frames[:10]))}")
                     
-                    # Frame analysis
-                    if result.frame_analysis:
-                        st.write("**Frame Analysis:**")
-                        st.write(f"- Total frames: {result.frame_analysis.get('total_frames', 0)}")
-                        st.write(f"- Suspicious frames: {result.frame_analysis.get('suspicious_frames', 0)}")
+                    st.write("**Detection Scores:**")
+                    st.write(f"- Facial Landmarks: {result.facial_landmarks_score:.1%}")
+                    st.write(f"- Frequency Analysis: {result.frequency_analysis_score:.1%}")
                     
-                    if result.techniques_detected:
-                        st.error(f"**Techniques Detected:** {', '.join(result.techniques_detected)}")
+                    if result.manipulation_regions:
+                        st.write(f"**Manipulated Regions:** {len(result.manipulation_regions)} detected")
+                    
+                    if result.explanation:
+                        st.info(f"**Analysis Summary:**\n{result.explanation}")
 
 # Document Validation Tab
 with tab4:

@@ -7,14 +7,34 @@ Complete fraud detection system with all features
 import streamlit as st
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 import base64
 from PIL import Image
 import io
+import pandas as pd
+import numpy as np
+import json
+import random
+
+# Import plotly for analytics dashboard
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import the analytics dashboard
+try:
+    from demo.fraud_analytics_dashboard import FraudAnalyticsDashboard
+    DASHBOARD_AVAILABLE = True
+except ImportError:
+    DASHBOARD_AVAILABLE = False
 
 # Custom CSS for better styling
 def load_custom_css():
@@ -955,197 +975,155 @@ with tab5:
                         st.rerun()
                 st.markdown("---")
 
-# Dashboard Tab
+# Analytics Dashboard Tab
 with tab6:
-    # Modern Dashboard Header
-    st.markdown("""
-    <div style='text-align: center; padding: 2rem 0;'>
-        <h1 style='color: #1f2937; margin: 0;'>🎯 FraudLens Command Center</h1>
-        <p style='color: #6b7280; font-size: 1.1rem; margin-top: 0.5rem;'>Real-time System Monitoring & Analytics</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Key Metrics Section with Cards
-    st.markdown("## 📊 System Status")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
+    # Check if dashboard is available
+    if not DASHBOARD_AVAILABLE or not PLOTLY_AVAILABLE:
+        st.error("📊 Dashboard requires plotly. Install with: pip install plotly reportlab")
+        if st.button("Install Required Packages"):
+            import subprocess
+            subprocess.run([sys.executable, "-m", "pip", "install", "plotly", "reportlab"])
+            st.success("Packages installed! Please refresh the page.")
+            st.stop()
+    else:
+        # Initialize the analytics dashboard
+        if 'analytics_dashboard' not in st.session_state:
+            st.session_state.analytics_dashboard = FraudAnalyticsDashboard()
+        
+        dashboard = st.session_state.analytics_dashboard
+        
+        # Dashboard Header
         st.markdown("""
-        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; color: white;'>
-            <h3 style='margin: 0; font-size: 1rem; opacity: 0.9;'>Status</h3>
-            <p style='font-size: 2rem; font-weight: bold; margin: 0.5rem 0;'>🟢 ONLINE</p>
-            <p style='font-size: 0.9rem; opacity: 0.8; margin: 0;'>All Systems Operational</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 12px; color: white;'>
-            <h3 style='margin: 0; font-size: 1rem; opacity: 0.9;'>Active Detectors</h3>
-            <p style='font-size: 2rem; font-weight: bold; margin: 0.5rem 0;'>5</p>
-            <p style='font-size: 0.9rem; opacity: 0.8; margin: 0;'>Text • Image • Video • Doc • Email</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        fraud_total = len(st.session_state.fraud_emails_history) if 'fraud_emails_history' in st.session_state else 0
-        st.markdown(f"""
-        <div style='background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 1.5rem; border-radius: 12px; color: white;'>
-            <h3 style='margin: 0; font-size: 1rem; opacity: 0.9;'>Threats Detected</h3>
-            <p style='font-size: 2rem; font-weight: bold; margin: 0.5rem 0;'>{fraud_total}</p>
-            <p style='font-size: 0.9rem; opacity: 0.8; margin: 0;'>Total Fraud Emails</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown(f"""
-        <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 12px; color: white;'>
-            <h3 style='margin: 0; font-size: 1rem; opacity: 0.9;'>Last Updated</h3>
-            <p style='font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0;'>{datetime.now().strftime("%H:%M")}</p>
-            <p style='font-size: 0.9rem; opacity: 0.8; margin: 0;'>{datetime.now().strftime("%B %d, %Y")}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Detection Capabilities Grid
-    st.markdown("## 🛡️ Detection Capabilities")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Text & Email Detection Card
-        st.markdown("""
-        <div style='background: #f8f9fa; border-left: 4px solid #ff4b4b; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;'>
-            <h3 style='color: #1f2937; margin-top: 0;'>📝 Text & Email Analysis</h3>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;'>
-                <div>✅ Phishing Detection</div>
-                <div>✅ Scam Identification</div>
-                <div>✅ Social Engineering</div>
-                <div>✅ Urgent Language</div>
-                <div>✅ Spoofing Detection</div>
-                <div>✅ Malicious Links</div>
-            </div>
+        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 10px; color: white; margin-bottom: 2rem;'>
+            <h1 style='text-align: center; margin: 0;'>📊 FraudLens Analytics Dashboard</h1>
+            <p style='text-align: center; margin-top: 10px; opacity: 0.9;'>Comprehensive Fraud Detection Analytics & Insights</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Document Validation Card
-        st.markdown("""
-        <div style='background: #f8f9fa; border-left: 4px solid #4CAF50; padding: 1.5rem; border-radius: 8px;'>
-            <h3 style='color: #1f2937; margin-top: 0;'>📄 Document Validation</h3>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;'>
-                <div>✅ ID Verification</div>
-                <div>✅ Certificates</div>
-                <div>✅ Official Documents</div>
-                <div>✅ Signatures</div>
-                <div>✅ Bank Statements</div>
-                <div>✅ Invoices</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        # Image Analysis Card
-        st.markdown("""
-        <div style='background: #f8f9fa; border-left: 4px solid #2196F3; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;'>
-            <h3 style='color: #1f2937; margin-top: 0;'>🖼️ Image Analysis</h3>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;'>
-                <div>✅ Manipulation Detection</div>
-                <div>✅ Doctoring Analysis</div>
-                <div>✅ Metadata Verification</div>
-                <div>✅ Authenticity Check</div>
-                <div>✅ Face Detection</div>
-                <div>✅ Object Recognition</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Key Metrics Row
+        col1, col2, col3, col4 = st.columns(4)
         
-        # Video Detection Card
-        st.markdown("""
-        <div style='background: #f8f9fa; border-left: 4px solid #9C27B0; padding: 1.5rem; border-radius: 8px;'>
-            <h3 style='color: #1f2937; margin-top: 0;'>🎥 Video Analysis</h3>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;'>
-                <div>✅ Deepfake Detection</div>
-                <div>✅ Face Swap Analysis</div>
-                <div>✅ Synthetic Content</div>
-                <div>✅ Frame Analysis</div>
-                <div>✅ Audio Mismatch</div>
-                <div>✅ Temporal Artifacts</div>
+        with col1:
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                <h4 style='color: #667eea; margin: 0;'>Active Threats</h4>
+                <h2 style='margin: 10px 0;'>247</h2>
+                <p style='color: red; margin: 0;'>↑ 12% from yesterday</p>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Performance Stats
-    st.markdown("## 📈 Performance Metrics")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div style='background: #e8f5e9; padding: 1rem; border-radius: 8px; text-align: center;'>
-            <h4 style='color: #2e7d32; margin: 0;'>Processing Speed</h4>
-            <p style='font-size: 2rem; font-weight: bold; color: #1b5e20; margin: 0.5rem 0;'>&lt;100ms</p>
-            <p style='color: #558b2f; margin: 0;'>Average Response Time</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div style='background: #fff3e0; padding: 1rem; border-radius: 8px; text-align: center;'>
-            <h4 style='color: #e65100; margin: 0;'>Accuracy Rate</h4>
-            <p style='font-size: 2rem; font-weight: bold; color: #bf360c; margin: 0.5rem 0;'>97.4%</p>
-            <p style='color: #ef6c00; margin: 0;'>Detection Accuracy</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div style='background: #e3f2fd; padding: 1rem; border-radius: 8px; text-align: center;'>
-            <h4 style='color: #0d47a1; margin: 0;'>Uptime</h4>
-            <p style='font-size: 2rem; font-weight: bold; color: #01579b; margin: 0.5rem 0;'>99.9%</p>
-            <p style='color: #0277bd; margin: 0;'>System Availability</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # About Section
-    st.markdown("## ℹ️ About FraudLens Pro")
-    
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 12px; color: white;'>
-        <h3 style='margin-top: 0;'>Advanced AI-Powered Fraud Detection</h3>
-        <p style='font-size: 1.1rem; line-height: 1.6;'>
-            FraudLens Pro employs cutting-edge artificial intelligence to protect you from digital threats. 
-            Our comprehensive suite of detectors analyzes text, images, videos, documents, and emails in real-time 
-            to identify potential fraud before it impacts you.
-        </p>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem;'>
-            <div style='background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;'>
-                <strong>🎯 Real-time Detection</strong><br>
-                Instant analysis and alerts
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                <h4 style='color: #764ba2; margin: 0;'>Blocked Today</h4>
+                <h2 style='margin: 10px 0;'>1,832</h2>
+                <p style='color: green; margin: 0;'>↓ 5% from average</p>
             </div>
-            <div style='background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;'>
-                <strong>🔒 Enterprise Security</strong><br>
-                Bank-grade protection
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                <h4 style='color: #667eea; margin: 0;'>Risk Score</h4>
+                <h2 style='margin: 10px 0;'>72/100</h2>
+                <p style='color: orange; margin: 0;'>High Risk</p>
             </div>
-            <div style='background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;'>
-                <strong>🌐 Multi-Modal AI</strong><br>
-                Comprehensive coverage
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                <h4 style='color: #764ba2; margin: 0;'>Accuracy</h4>
+                <h2 style='margin: 10px 0;'>96.5%</h2>
+                <p style='color: green; margin: 0;'>Above Target</p>
             </div>
-        </div>
-        <p style='margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.9;'>
-            ⚠️ Always verify suspicious content through official channels before taking any action.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Footer
-st.markdown("---")
-st.markdown(
-    "<p style='text-align: center; color: #6c757d;'>FraudLens Pro v2.0 | Powered by Advanced AI | © 2024</p>",
-    unsafe_allow_html=True
-)
+            """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Analytics Tabs
+        tab_trends, tab_distribution, tab_heatmap, tab_geographic, tab_performance = st.tabs([
+            "📈 Trends", "🥧 Distribution", "🗺️ Heatmap", "🌍 Geographic", "📊 Performance"
+        ])
+        
+        with tab_trends:
+            st.plotly_chart(dashboard.create_fraud_trends_chart(), use_container_width=True)
+        
+        with tab_distribution:
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.plotly_chart(dashboard.create_fraud_distribution_pie(), use_container_width=True)
+            with col2:
+                st.markdown("### Risk Distribution")
+                for risk_level, percentage in dashboard.risk_scores.items():
+                    color = {'Critical': 'red', 'High': 'orange', 'Medium': 'yellow', 'Low': 'green'}[risk_level]
+                    st.markdown(f"""
+                    <div style='margin: 10px 0;'>
+                        <div style='display: flex; justify-content: space-between;'>
+                            <span>{risk_level}</span>
+                            <span>{percentage}%</span>
+                        </div>
+                        <div style='background: #e0e0e0; height: 20px; border-radius: 10px;'>
+                            <div style='background: {color}; width: {percentage}%; height: 100%; border-radius: 10px;'></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        with tab_heatmap:
+            st.plotly_chart(dashboard.create_email_fraud_heatmap(), use_container_width=True)
+            st.info("📧 Peak fraud activity detected during business hours (9 AM - 5 PM) on weekdays")
+        
+        with tab_geographic:
+            st.plotly_chart(dashboard.create_geographic_map(), use_container_width=True)
+        
+        with tab_performance:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(dashboard.create_accuracy_bar_chart(), use_container_width=True)
+            with col2:
+                st.plotly_chart(dashboard.create_risk_gauge(), use_container_width=True)
+        
+        # Recent Alerts Section
+        st.markdown("### 🚨 Recent Fraud Alerts")
+        
+        # Style the dataframe
+        styled_df = dashboard.recent_alerts.style.apply(
+            lambda x: ['background-color: #ffcccc' if v == 'Critical' 
+                      else 'background-color: #ffe6cc' if v == 'High'
+                      else 'background-color: #ffffcc' if v == 'Medium'
+                      else 'background-color: #ccffcc' if v == 'Low'
+                      else '' for v in x],
+            subset=['Severity']
+        )
+        
+        st.dataframe(styled_df, use_container_width=True, height=300)
+        
+        # Export Section
+        st.markdown("---")
+        st.markdown("### 📥 Export Options")
+        
+        col1, col2, col3 = st.columns([1, 1, 3])
+        
+        with col1:
+            if st.button("📄 Export to CSV", use_container_width=True):
+                csv_data = dashboard.export_to_csv()
+                b64 = base64.b64encode(csv_data.encode()).decode()
+                href = f'<a href="data:file/csv;base64,{b64}" download="fraud_analytics_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv">Download CSV Report</a>'
+                st.markdown(href, unsafe_allow_html=True)
+                st.success("CSV report ready for download!")
+        
+        with col2:
+            if st.button("📑 Export to PDF", use_container_width=True):
+                pdf_data = dashboard.export_to_pdf()
+                if pdf_data:
+                    b64 = base64.b64encode(pdf_data).decode()
+                    href = f'<a href="data:application/pdf;base64,{b64}" download="fraud_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf">Download PDF Report</a>'
+                    st.markdown(href, unsafe_allow_html=True)
+                    st.success("PDF report ready for download!")
+                else:
+                    st.error("PDF export requires reportlab. Install with: pip install reportlab")
+        
+        with col3:
+            if st.button("🔄 Refresh Data", use_container_width=True):
+                dashboard.initialize_data()
+                st.rerun()

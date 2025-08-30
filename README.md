@@ -6,7 +6,7 @@ An advanced, open-source multi-modal fraud detection system leveraging cutting-e
 
 FraudLens is an **open-source, work-in-progress** initiative aimed at making sophisticated fraud detection accessible to everyone. Our mission is to provide powerful, enterprise-grade fraud detection capabilities that were once only available to large corporations, now accessible to small companies, startups, and individual developers.
 
-**We warmly invite developers, researchers, and security professionals to collaborate with us** in building the future of fraud prevention. Together, we can create a safer digital ecosystem for all.
+**We warmly invite developers, researchers, and security professionals to collaborate with us** in building the future of fraud prevention. Together, we can create a safer digital ecosystem for all. We are far from perfect but with community help, we can make this the most robust anti-fraud platform in the world.
 
 ## 🤝 Contributing & Collaboration
 

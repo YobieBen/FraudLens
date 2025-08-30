@@ -1,0 +1,14 @@
+{
+  "test_date": "2025-08-29",
+  "components_tested": [
+    "VideoFraudDetector",
+    "DeepfakeDetector",
+    "Integrated Detection"
+  ],
+  "status": "SUCCESS",
+  "confidence_score_ranges": {
+    "deepfake_detection": "0-100%",
+    "video_fraud": "0-100%",
+    "temporal_consistency": "0-100%"
+  }
+}

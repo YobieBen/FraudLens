@@ -109,6 +109,10 @@ class ThreatIntelligenceManager:
         self.known_bad_hashes: Set[str] = set()
         self.known_bad_emails: Set[str] = set()
         
+        # Feed status tracking
+        self.feeds_status = {}
+        self.last_update = None
+        
         # Phishing patterns
         self.phishing_patterns = [
             # URL shorteners often used in phishing
@@ -148,6 +152,15 @@ class ThreatIntelligenceManager:
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
+        # Update feed status
+        for i, (feed_name, _) in enumerate(self.feeds.items()):
+            if i < len(results):
+                self.feeds_status[feed_name] = {
+                    "status": "active" if not isinstance(results[i], Exception) else "failed",
+                    "last_check": datetime.now().isoformat()
+                }
+        
+        self.last_update = datetime.now()
         success_count = sum(1 for r in results if not isinstance(r, Exception))
         logger.info(f"Updated {success_count}/{len(tasks)} threat feeds")
     
@@ -420,6 +433,23 @@ class ThreatIntelligenceManager:
                 return True
         return False
     
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get threat intelligence statistics."""
+        return {
+            "total_indicators": (
+                len(self.known_bad_urls) + 
+                len(self.known_bad_domains) + 
+                len(self.known_bad_ips) + 
+                len(self.known_bad_hashes)
+            ),
+            "known_bad_urls": len(self.known_bad_urls),
+            "known_bad_domains": len(self.known_bad_domains),
+            "known_bad_ips": len(self.known_bad_ips),
+            "known_bad_hashes": len(self.known_bad_hashes),
+            "feeds_active": len([f for f in self.feeds_status.values() if f.get("status") == "active"]),
+            "last_update": self.last_update.isoformat() if self.last_update else None,
+        }
+    
     async def get_threat_summary(self) -> Dict[str, Any]:
         """Get summary of threat intelligence data."""
         return {
@@ -429,18 +459,6 @@ class ThreatIntelligenceManager:
             "known_bad_hashes": len(self.known_bad_hashes),
             "feeds_configured": len(self.feeds),
             "last_updated": datetime.now().isoformat()
-        }
-    
-    def get_statistics(self) -> Dict[str, Any]:
-        """Get threat intelligence statistics."""
-        return {
-            "urls_checked": len(self.known_bad_urls),
-            "domains_blacklisted": len(self.known_bad_domains),
-            "ips_blacklisted": len(self.known_bad_ips),
-            "threats_detected": len(self.known_bad_urls) + len(self.known_bad_domains),
-            "active_feeds": len([f for f in self.feeds.values() if f.get("enabled", True)]),
-            "last_update": datetime.now().isoformat(),
-            "feeds_configured": len(self.feeds)
         }
     
     async def cleanup(self) -> None:

@@ -738,6 +738,100 @@ class DocumentValidator:
             "error": f"Unknown document type: {document_type}"
         }
     
+    def validate_document_structure(self, document_type: str, document_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate the structure and format of a document.
+        
+        Args:
+            document_type: Type of document (driver_license, passport, etc.)
+            document_data: Document data to validate
+            
+        Returns:
+            Validation result with structure analysis
+        """
+        result = {
+            "valid": False,
+            "document_type": document_type,
+            "errors": [],
+            "warnings": [],
+            "field_validation": {}
+        }
+        
+        # Define required fields for each document type
+        required_fields = {
+            "driver_license": ["number", "name", "dob", "state", "expiry"],
+            "passport": ["number", "name", "nationality", "dob", "expiry"],
+            "ssn_card": ["number", "name"],
+            "bank_statement": ["account_number", "name", "date", "balance"],
+            "utility_bill": ["account_number", "name", "address", "date"],
+            "insurance_card": ["policy_number", "name", "provider", "expiry"],
+        }
+        
+        # Check if document type is supported
+        if document_type not in required_fields:
+            result["errors"].append(f"Unsupported document type: {document_type}")
+            return result
+        
+        # Validate required fields
+        missing_fields = []
+        for field in required_fields[document_type]:
+            if field not in document_data or not document_data[field]:
+                missing_fields.append(field)
+                result["field_validation"][field] = "missing"
+            else:
+                result["field_validation"][field] = "present"
+        
+        if missing_fields:
+            result["errors"].append(f"Missing required fields: {', '.join(missing_fields)}")
+        
+        # Type-specific validation
+        if document_type == "driver_license" and "number" in document_data:
+            state = document_data.get("state", "CA")
+            dl_validation = self.validate_driver_license(document_data["number"], state)
+            result["field_validation"]["number"] = "valid" if dl_validation["valid"] else "invalid"
+            if not dl_validation["valid"]:
+                result["errors"].append(f"Invalid driver license format for {state}")
+        
+        elif document_type == "passport" and "number" in document_data:
+            # Basic passport number validation
+            passport_num = document_data["number"]
+            if not re.match(r"^[A-Z0-9]{6,9}$", passport_num):
+                result["errors"].append("Invalid passport number format")
+                result["field_validation"]["number"] = "invalid"
+        
+        elif document_type == "ssn_card" and "number" in document_data:
+            ssn_validation = self.validate_ssn(document_data["number"])
+            result["field_validation"]["number"] = "valid" if ssn_validation["valid"] else "invalid"
+            if not ssn_validation["valid"]:
+                result["errors"].append("Invalid SSN format")
+        
+        # Check for suspicious patterns
+        if document_data.get("name"):
+            name = document_data["name"].lower()
+            if any(fake in name for fake in ["test", "fake", "sample", "example", "mclovin"]):
+                result["warnings"].append("Suspicious name detected")
+                result["field_validation"]["name"] = "suspicious"
+        
+        # Date validation
+        date_fields = ["dob", "expiry", "date"]
+        for field in date_fields:
+            if field in document_data:
+                try:
+                    from datetime import datetime
+                    # Try to parse date
+                    date_str = document_data[field]
+                    if isinstance(date_str, str):
+                        datetime.strptime(date_str, "%Y-%m-%d")
+                        result["field_validation"][field] = "valid"
+                except:
+                    result["warnings"].append(f"Invalid date format for {field}")
+                    result["field_validation"][field] = "invalid"
+        
+        # Determine overall validity
+        result["valid"] = len(result["errors"]) == 0
+        
+        return result
+    
     def get_supported_documents(self) -> Dict[str, List[str]]:
         """Get list of supported document types."""
         return {

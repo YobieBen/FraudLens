@@ -25,7 +25,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 from ..core.pipeline import FraudDetectionPipeline
-from ..models import FraudType
+from ..core.base.detector import FraudType
 
 
 class EmailAction(Enum):

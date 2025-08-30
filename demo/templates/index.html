@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudLens - Gmail Fraud Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-box {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            color: #2d3748;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .email-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ccc;
+        }
+        
+        .email-item.fraud {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+        
+        .email-item.safe {
+            border-left-color: #48bb78;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+        
+        .query-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .query-btn {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .query-btn:hover {
+            border-color: #667eea;
+        }
+        
+        .query-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 FraudLens - Gmail Fraud Detection</h1>
+            <p>Advanced AI-powered fraud detection for your emails</p>
+        </header>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="card">
+            <h2>📧 Gmail Connection</h2>
+            <div class="form-group">
+                <label for="email">Gmail Address</label>
+                <input type="email" id="email" placeholder="yourname@gmail.com">
+            </div>
+            <div class="form-group">
+                <label for="password">App Password</label>
+                <input type="password" id="password" placeholder="Enter your Gmail app password">
+            </div>
+            <button id="connectBtn" onclick="connectGmail()">Connect to Gmail</button>
+            <button id="disconnectBtn" onclick="disconnectGmail()" style="display:none; background:#f56565;">Disconnect</button>
+        </div>
+        
+        <div class="card">
+            <h2>🔍 Email Scan Options</h2>
+            <div class="query-options">
+                <div class="query-btn active" data-query="Unread">Unread</div>
+                <div class="query-btn" data-query="All">All</div>
+                <div class="query-btn" data-query="With Attachments">With Attachments</div>
+                <div class="query-btn" data-query="Unknown Senders">Unknown Senders</div>
+            </div>
+            <div class="form-group">
+                <label for="maxEmails">Max Emails per Batch</label>
+                <input type="range" id="maxEmails" min="10" max="1000" value="100" step="10">
+                <span id="maxEmailsValue">100</span>
+            </div>
+            <button id="scanBtn" onclick="scanEmails()" disabled>Scan Emails</button>
+        </div>
+        
+        <div class="card">
+            <h2>📊 Statistics</h2>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-label">Total Processed</div>
+                    <div class="stat-value" id="totalProcessed">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Fraud Detected</div>
+                    <div class="stat-value" id="fraudDetected">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Last Check</div>
+                    <div class="stat-value" id="lastCheck" style="font-size:16px;">Never</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📨 Scan Results</h2>
+            <div id="results" class="results">
+                <p style="color:#718096;">No scan results yet. Connect to Gmail and click 'Scan Emails' to start.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let isConnected = false;
+        let selectedQuery = 'Unread';
+        
+        // Query type selection
+        document.querySelectorAll('.query-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.query-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedQuery = this.dataset.query;
+            });
+        });
+        
+        // Max emails slider
+        document.getElementById('maxEmails').addEventListener('input', function() {
+            document.getElementById('maxEmailsValue').textContent = this.value;
+        });
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+        
+        async function connectGmail() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showStatus('Please enter email and password', 'error');
+                return;
+            }
+            
+            showStatus('Connecting to Gmail...', 'info');
+            
+            try {
+                const response = await fetch('/api/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    isConnected = true;
+                    document.getElementById('connectBtn').style.display = 'none';
+                    document.getElementById('disconnectBtn').style.display = 'inline-block';
+                    document.getElementById('scanBtn').disabled = false;
+                    showStatus(data.message, 'success');
+                } else {
+                    showStatus('Connection failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Connection error: ' + error.message, 'error');
+            }
+        }
+        
+        async function disconnectGmail() {
+            try {
+                await fetch('/api/disconnect', {method: 'POST'});
+                isConnected = false;
+                document.getElementById('connectBtn').style.display = 'inline-block';
+                document.getElementById('disconnectBtn').style.display = 'none';
+                document.getElementById('scanBtn').disabled = true;
+                showStatus('Disconnected from Gmail', 'info');
+            } catch (error) {
+                showStatus('Disconnect error: ' + error.message, 'error');
+            }
+        }
+        
+        async function scanEmails() {
+            if (!isConnected) {
+                showStatus('Please connect to Gmail first', 'error');
+                return;
+            }
+            
+            const maxEmails = document.getElementById('maxEmails').value;
+            showStatus('Scanning emails...', 'info');
+            
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        query_type: selectedQuery,
+                        max_emails: parseInt(maxEmails)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.results);
+                    updateStats(data.stats);
+                    showStatus(`Scanned ${data.results.length} emails`, 'success');
+                } else {
+                    showStatus('Scan failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Scan error: ' + error.message, 'error');
+            }
+        }
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = '<p style="color:#718096;">No emails found matching the query.</p>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = results.map(email => `
+                <div class="email-item ${email.is_fraud ? 'fraud' : 'safe'}">
+                    <div style="font-weight:bold;">${email.is_fraud ? '⚠️' : '✅'} ${email.subject || 'No subject'}</div>
+                    <div style="color:#718096; font-size:12px;">From: ${email.sender}</div>
+                    <div style="color:#718096; font-size:12px;">Date: ${email.date}</div>
+                    ${email.is_fraud ? `
+                        <div style="margin-top:10px; color:#e53e3e;">
+                            Confidence: ${(email.confidence * 100).toFixed(1)}% | 
+                            Risk: ${email.risk_level} | 
+                            Types: ${email.fraud_types.join(', ')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+        
+        function updateStats(stats) {
+            document.getElementById('totalProcessed').textContent = stats.total_processed;
+            document.getElementById('fraudDetected').textContent = stats.fraud_detected;
+            document.getElementById('lastCheck').textContent = stats.last_check;
+        }
+        
+        // Load initial stats
+        fetch('/api/stats')
+            .then(r => r.json())
+            .then(updateStats);
+    </script>
+</body>
+</html>

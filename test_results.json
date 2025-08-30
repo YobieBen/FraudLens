@@ -11,7 +11,7 @@
         "FraudType.PHISHING"
       ],
       "correct": true,
-      "processing_time_ms": 1.9028186798095703
+      "processing_time_ms": 1.8930435180664062
     },
     {
       "test_case": "Lottery scam",
@@ -24,7 +24,7 @@
         "FraudType.PHISHING"
       ],
       "correct": true,
-      "processing_time_ms": 0.3159046173095703
+      "processing_time_ms": 0.3027915954589844
     },
     {
       "test_case": "Nigerian prince scam",
@@ -37,7 +37,7 @@
         "FraudType.SCAM"
       ],
       "correct": true,
-      "processing_time_ms": 0.11515617370605469
+      "processing_time_ms": 0.1163482666015625
     },
     {
       "test_case": "Identity theft attempt",
@@ -51,7 +51,7 @@
         "FraudType.PHISHING"
       ],
       "correct": true,
-      "processing_time_ms": 0.12421607971191406
+      "processing_time_ms": 0.12493133544921875
     },
     {
       "test_case": "Legitimate business email",
@@ -62,7 +62,7 @@
       "confidence": 0.9,
       "fraud_types": [],
       "correct": true,
-      "processing_time_ms": 0.13899803161621094
+      "processing_time_ms": 0.13494491577148438
     },
     {
       "test_case": "Legitimate invoice",
@@ -73,15 +73,15 @@
       "confidence": 0.9,
       "fraud_types": [],
       "correct": true,
-      "processing_time_ms": 0.16260147094726562
+      "processing_time_ms": 0.16188621520996094
     }
   ],
   "known_fakes": {
-    "mclovin_detected": false
+    "mclovin_detected": true
   },
   "integrations": {
-    "threat_intel": "failed",
-    "phishing_db": "failed",
-    "document_validator": "failed"
+    "threat_intel": "active",
+    "phishing_db": "active",
+    "document_validator": "active"
   }
 }

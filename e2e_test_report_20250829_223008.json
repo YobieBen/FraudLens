@@ -1,0 +1,40 @@
+{
+  "test_date": "2025-08-29T22:30:06.961306",
+  "environment": "development",
+  "tests_run": 19,
+  "tests_passed": 16,
+  "tests_failed": 2,
+  "module_results": {
+    "text_detection": {
+      "detection_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "avg_processing_time": 1.9550323486328123e-06,
+      "tests_run": 10
+    },
+    "image_detection": {
+      "accuracy": 1.0,
+      "tests_run": 3
+    },
+    "video_detection": {
+      "accuracy": 0.0,
+      "tests_run": 2
+    },
+    "document_validation": {
+      "accuracy": 1.0,
+      "tests_run": 2
+    },
+    "api_endpoints": {
+      "status": "tested",
+      "tests_run": 1
+    }
+  },
+  "performance_metrics": {
+    "text_processing": {
+      "avg_time": 1.4066696166992188e-06,
+      "min_time": 0.0,
+      "max_time": 5.245208740234375e-06,
+      "iterations": 10
+    }
+  },
+  "errors": []
+}

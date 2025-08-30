@@ -1,0 +1,47 @@
+{
+  "test_date": "2025-08-30T09:51:09.196835",
+  "environment": "development",
+  "tests_run": 22,
+  "tests_passed": 22,
+  "tests_failed": 0,
+  "module_results": {
+    "text_detection": {
+      "detection_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "avg_processing_time": 2.2411346435546876e-06,
+      "tests_run": 10
+    },
+    "image_detection": {
+      "accuracy": 1.0,
+      "tests_run": 3
+    },
+    "video_detection": {
+      "accuracy": 1.0,
+      "tests_run": 2
+    },
+    "document_validation": {
+      "accuracy": 1.0,
+      "tests_run": 2
+    },
+    "api_endpoints": {
+      "status": "tested",
+      "tests_run": 4,
+      "endpoints_tested": [
+        "/health",
+        "/analyze/text",
+        "/analyze/image",
+        "/analyze/video"
+      ],
+      "all_passed": true
+    }
+  },
+  "performance_metrics": {
+    "text_processing": {
+      "avg_time": 2.002716064453125e-06,
+      "min_time": 7.152557373046875e-07,
+      "max_time": 1.0013580322265625e-05,
+      "iterations": 10
+    }
+  },
+  "errors": []
+}

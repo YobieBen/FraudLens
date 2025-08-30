@@ -1,0 +1,115 @@
+[run]
+# Coverage.py configuration
+
+# Source packages
+source = fraudlens
+
+# Omit files from coverage
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */site-packages/*
+    */dist-packages/*
+    */venv/*
+    */env/*
+    */.venv/*
+    */migrations/*
+    */config.py
+    */settings.py
+    */setup.py
+    */conftest.py
+
+# Enable branch coverage
+branch = True
+
+# Parallel execution
+parallel = True
+concurrency = multiprocessing,thread,greenlet
+
+# Context for coverage
+context = test
+
+[report]
+# Reporting configuration
+
+# Skip files with no code
+skip_empty = True
+
+# Skip covered files in report
+skip_covered = False
+
+# Precision for coverage percentages
+precision = 2
+
+# Show missing line numbers
+show_missing = True
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+    
+    # Debug code
+    def __repr__
+    def __str__
+    
+    # Defensive programming
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Non-runnable code
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstract
+    @abstractmethod
+    
+    # Optional dependencies
+    except ImportError
+    except ModuleNotFoundError
+    
+    # Platform-specific code
+    if sys.platform
+    if os.name
+    
+    # Test/debug code
+    if DEBUG
+    if debug
+    if self.debug
+    
+    # Logging
+    logger.debug
+    logging.debug
+
+# Ignore errors
+ignore_errors = True
+
+# Sort report by coverage percentage
+sort = Cover
+
+[html]
+# HTML report configuration
+directory = htmlcov
+title = FraudLens Test Coverage Report
+show_contexts = True
+
+[xml]
+# XML report configuration
+output = coverage.xml
+
+[json]
+# JSON report configuration
+output = coverage.json
+pretty_print = True
+show_contexts = True
+
+[paths]
+# Path mappings for combining coverage data
+source =
+    fraudlens/
+    */fraudlens/
+    */site-packages/fraudlens/
+
+[tool:coverage]
+# Additional coverage settings
+relative_files = True

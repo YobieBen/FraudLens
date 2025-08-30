@@ -1,0 +1,185 @@
+# FraudLens Comprehensive Testing Makefile
+
+.PHONY: help test test-unit test-integration test-performance test-all coverage benchmark clean install dev-install lint format security docs serve-docs docker-build docker-run
+
+# Variables
+PYTHON := python3
+PIP := pip3
+PYTEST := pytest
+COVERAGE := coverage
+TOX := tox
+BLACK := black
+ISORT := isort
+FLAKE8 := flake8
+BANDIT := bandit
+
+# Colors for output
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+NC := \033[0m # No Color
+
+help: ## Show this help message
+	@echo "$(GREEN)FraudLens Testing and Development Commands$(NC)"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
+
+install: ## Install production dependencies
+	@echo "$(GREEN)Installing production dependencies...$(NC)"
+	$(PIP) install -r requirements.txt
+
+dev-install: ## Install development dependencies
+	@echo "$(GREEN)Installing development dependencies...$(NC)"
+	$(PIP) install -r requirements.txt
+	$(PIP) install pytest pytest-cov pytest-asyncio pytest-mock pytest-benchmark pytest-timeout pytest-xdist
+	$(PIP) install coverage[toml] tox black isort flake8 mypy bandit safety
+	$(PIP) install memory-profiler psutil
+
+test: ## Run all tests with coverage
+	@echo "$(GREEN)Running all tests with coverage...$(NC)"
+	$(PYTEST) --cov=fraudlens --cov-report=term-missing --cov-report=html
+
+test-unit: ## Run unit tests only
+	@echo "$(GREEN)Running unit tests...$(NC)"
+	$(PYTEST) tests/unit/ -v --cov=fraudlens.api.gmail_integration --cov=fraudlens.core
+
+test-integration: ## Run integration tests only
+	@echo "$(GREEN)Running integration tests...$(NC)"
+	$(PYTEST) tests/integration/ -v -m integration
+
+test-performance: ## Run performance benchmarks
+	@echo "$(GREEN)Running performance benchmarks...$(NC)"
+	$(PYTEST) tests/performance/ -v -m benchmark --benchmark-only
+
+test-email: ## Run email-related tests
+	@echo "$(GREEN)Running email tests...$(NC)"
+	$(PYTEST) tests/unit/test_gmail_integration.py tests/integration/test_email_api_endpoints.py -v
+
+test-all: ## Run all tests in all Python environments
+	@echo "$(GREEN)Running tests in all environments...$(NC)"
+	$(TOX)
+
+coverage: ## Generate coverage report
+	@echo "$(GREEN)Generating coverage report...$(NC)"
+	$(COVERAGE) erase
+	$(COVERAGE) run -m pytest tests/
+	$(COVERAGE) report --fail-under=80
+	$(COVERAGE) html
+	@echo "$(GREEN)Coverage report generated in htmlcov/index.html$(NC)"
+
+coverage-open: coverage ## Generate and open coverage report
+	@echo "$(GREEN)Opening coverage report...$(NC)"
+	open htmlcov/index.html
+
+benchmark: ## Run performance benchmarks with detailed output
+	@echo "$(GREEN)Running detailed benchmarks...$(NC)"
+	$(PYTEST) tests/performance/ -v --benchmark-only --benchmark-verbose --benchmark-autosave
+
+benchmark-compare: ## Compare benchmark results
+	@echo "$(GREEN)Comparing benchmark results...$(NC)"
+	$(PYTEST) tests/performance/ --benchmark-compare --benchmark-compare-fail=min:10%
+
+lint: ## Run code quality checks
+	@echo "$(GREEN)Running linters...$(NC)"
+	$(BLACK) --check fraudlens/ tests/
+	$(ISORT) --check-only fraudlens/ tests/
+	$(FLAKE8) fraudlens/ tests/
+	$(PYTHON) -m mypy fraudlens/
+
+format: ## Format code automatically
+	@echo "$(GREEN)Formatting code...$(NC)"
+	$(BLACK) fraudlens/ tests/
+	$(ISORT) fraudlens/ tests/
+	@echo "$(GREEN)Code formatted successfully$(NC)"
+
+security: ## Run security checks
+	@echo "$(GREEN)Running security checks...$(NC)"
+	$(BANDIT) -r fraudlens/ -f json -o security-report.json
+	$(PYTHON) -m safety check --json
+	@echo "$(GREEN)Security report saved to security-report.json$(NC)"
+
+clean: ## Clean build artifacts and cache
+	@echo "$(GREEN)Cleaning build artifacts...$(NC)"
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info
+	rm -rf htmlcov/
+	rm -rf .coverage
+	rm -rf .pytest_cache/
+	rm -rf .tox/
+	rm -rf .mypy_cache/
+	find . -type d -name __pycache__ -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.pyo" -delete
+	find . -type f -name "*.coverage" -delete
+	@echo "$(GREEN)Cleanup completed$(NC)"
+
+docs: ## Build documentation
+	@echo "$(GREEN)Building documentation...$(NC)"
+	cd docs && $(MAKE) html
+	@echo "$(GREEN)Documentation built in docs/_build/html/$(NC)"
+
+serve-docs: docs ## Build and serve documentation
+	@echo "$(GREEN)Serving documentation on http://localhost:8080$(NC)"
+	cd docs/_build/html && python -m http.server 8080
+
+docker-build: ## Build Docker image
+	@echo "$(GREEN)Building Docker image...$(NC)"
+	docker build -f Dockerfile.production -t fraudlens:latest .
+
+docker-run: ## Run Docker container
+	@echo "$(GREEN)Running Docker container...$(NC)"
+	docker-compose -f docker-compose.production.yml up -d
+
+docker-test: ## Run tests in Docker
+	@echo "$(GREEN)Running tests in Docker...$(NC)"
+	docker run --rm fraudlens:latest pytest tests/
+
+ci-test: ## Run CI test suite
+	@echo "$(GREEN)Running CI test suite...$(NC)"
+	$(PYTEST) --cov=fraudlens --cov-report=xml --cov-report=term --junitxml=test-results.xml
+
+watch-tests: ## Watch and run tests on file changes
+	@echo "$(GREEN)Watching for file changes...$(NC)"
+	$(PYTEST) --watch fraudlens/ tests/
+
+profile-tests: ## Profile test execution
+	@echo "$(GREEN)Profiling test execution...$(NC)"
+	$(PYTEST) tests/ --profile --profile-svg
+
+test-report: ## Generate detailed test report
+	@echo "$(GREEN)Generating test report...$(NC)"
+	$(PYTEST) --html=test-report.html --self-contained-html
+	@echo "$(GREEN)Test report saved to test-report.html$(NC)"
+
+test-parallel: ## Run tests in parallel
+	@echo "$(GREEN)Running tests in parallel...$(NC)"
+	$(PYTEST) -n auto tests/
+
+test-failed: ## Re-run only failed tests
+	@echo "$(GREEN)Re-running failed tests...$(NC)"
+	$(PYTEST) --lf tests/
+
+test-debug: ## Run tests with debugging enabled
+	@echo "$(GREEN)Running tests with debugging...$(NC)"
+	$(PYTEST) -vv --pdb --pdbcls=IPython.terminal.debugger:Pdb tests/
+
+validate: lint security test ## Run all validation checks
+	@echo "$(GREEN)All validation checks passed!$(NC)"
+
+release: validate ## Prepare for release
+	@echo "$(GREEN)Preparing for release...$(NC)"
+	$(PYTHON) setup.py sdist bdist_wheel
+	@echo "$(GREEN)Release artifacts created in dist/$(NC)"
+
+# Development shortcuts
+t: test
+tu: test-unit
+ti: test-integration
+tp: test-performance
+c: coverage
+b: benchmark
+l: lint
+f: format
+s: security
+d: docs

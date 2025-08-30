@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraudlens-api
+  namespace: fraudlens
+  labels:
+    app: fraudlens
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fraudlens
+      component: api
+  template:
+    metadata:
+      labels:
+        app: fraudlens
+        component: api
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z fraudlens-postgres 5432; do echo waiting for db; sleep 2; done']
+      - name: wait-for-redis
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z fraudlens-redis 6379; do echo waiting for redis; sleep 2; done']
+      containers:
+      - name: api
+        image: fraudlens:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "-m", "uvicorn", "fraudlens.api.secured_api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+        envFrom:
+        - configMapRef:
+            name: fraudlens-config
+        - secretRef:
+            name: fraudlens-secret
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: models
+          mountPath: /app/models
+        - name: uploads
+          mountPath: /app/data/uploads
+        - name: cache
+          mountPath: /app/data/cache
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: models-pvc
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+      - name: cache
+        emptyDir:
+          sizeLimit: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraudlens-api
+  namespace: fraudlens
+  labels:
+    app: fraudlens
+    component: api
+spec:
+  selector:
+    app: fraudlens
+    component: api
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  - port: 9090
+    targetPort: 9090
+    name: metrics
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: models-pvc
+  namespace: fraudlens
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-pvc
+  namespace: fraudlens
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard

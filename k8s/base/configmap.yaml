@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraudlens-config
+  namespace: fraudlens
+data:
+  # Application Configuration
+  FRAUDLENS_ENV: "production"
+  FRAUDLENS_DEBUG: "false"
+  FRAUDLENS_LOG_LEVEL: "INFO"
+  FRAUDLENS_MAX_MEMORY_GB: "8"
+  
+  # API Configuration
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  API_WORKERS: "4"
+  API_RATE_LIMIT: "1000"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  
+  # Redis Configuration
+  REDIS_HOST: "fraudlens-redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "1"
+  
+  # PostgreSQL Configuration
+  POSTGRES_HOST: "fraudlens-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "fraudlens"
+  
+  # Worker Configuration
+  WORKER_CONCURRENCY: "4"
+  WORKER_MAX_TASKS_PER_CHILD: "100"
+  
+  # Monitoring
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "9090"

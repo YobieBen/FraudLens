@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraudlens-ui
+  namespace: fraudlens
+  labels:
+    app: fraudlens
+    component: ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fraudlens
+      component: ui
+  template:
+    metadata:
+      labels:
+        app: fraudlens
+        component: ui
+    spec:
+      initContainers:
+      - name: wait-for-api
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z fraudlens-api 8000; do echo waiting for api; sleep 2; done']
+      containers:
+      - name: streamlit
+        image: fraudlens:latest
+        imagePullPolicy: IfNotPresent
+        command: ["streamlit", "run", "demo/streamlit_enhanced.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+        env:
+        - name: FRAUDLENS_ENV
+          value: "production"
+        - name: API_BASE_URL
+          value: "http://fraudlens-api:8000"
+        - name: STREAMLIT_SERVER_HEADLESS
+          value: "true"
+        - name: STREAMLIT_SERVER_FILE_WATCHER_TYPE
+          value: "none"
+        envFrom:
+        - configMapRef:
+            name: fraudlens-config
+        ports:
+        - containerPort: 8501
+          name: http
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/data/uploads
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraudlens-ui
+  namespace: fraudlens
+  labels:
+    app: fraudlens
+    component: ui
+spec:
+  selector:
+    app: fraudlens
+    component: ui
+  ports:
+  - port: 8501
+    targetPort: 8501
+    name: http
+  type: ClusterIP

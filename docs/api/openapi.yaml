@@ -1,0 +1,1007 @@
+openapi: 3.0.3
+info:
+  title: FraudLens API
+  description: |
+    # FraudLens REST API Documentation
+    
+    Advanced AI-powered fraud detection system API for email, text, image, and document analysis.
+    
+    ## Features
+    - 🔐 JWT Authentication with refresh tokens
+    - 📧 Email fraud detection with Gmail integration
+    - 📝 Text fraud analysis
+    - 🖼️ Image manipulation detection
+    - 📄 Document validation
+    - ⚡ Real-time monitoring
+    - 📊 Analytics and reporting
+    
+    ## Authentication
+    Use Bearer token authentication. Obtain token via `/auth/token` endpoint.
+    
+    ## Rate Limiting
+    - Default: 1000 requests/minute
+    - Admin: 5000 requests/minute
+    - API Users: 2000 requests/minute
+    
+  version: 2.0.0
+  contact:
+    name: FraudLens Support
+    email: support@fraudlens.com
+    url: https://fraudlens.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.fraudlens.com/v2
+    description: Production server
+  - url: https://staging-api.fraudlens.com/v2
+    description: Staging server
+  - url: http://localhost:8000
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Email
+    description: Email fraud detection and monitoring
+  - name: Analysis
+    description: Fraud analysis endpoints
+  - name: Monitoring
+    description: Real-time monitoring
+  - name: Reports
+    description: Analytics and reporting
+  - name: Admin
+    description: Administrative operations
+
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: User already exists
+
+  /auth/token:
+    post:
+      tags:
+        - Authentication
+      summary: Login and get access token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: SecurePassword123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      operationId: refreshToken
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout and invalidate token
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Email Endpoints
+  /email/scan-inbox:
+    post:
+      tags:
+        - Email
+      summary: Scan Gmail inbox for fraudulent emails
+      operationId: scanInbox
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                max_emails:
+                  type: integer
+                  default: 50
+                  minimum: 1
+                  maximum: 500
+                  description: Maximum number of emails to scan
+                query:
+                  type: string
+                  description: Gmail query string
+                  example: "is:unread after:2024/1/1"
+                date_from:
+                  type: string
+                  format: date
+                  description: Start date for scanning
+                date_to:
+                  type: string
+                  format: date
+                  description: End date for scanning
+      responses:
+        '200':
+          description: Scan completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmailScanResult'
+                  total_scanned:
+                    type: integer
+                  fraud_detected:
+                    type: integer
+                  scan_duration:
+                    type: number
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /email/scan/{message_id}:
+    get:
+      tags:
+        - Email
+      summary: Scan specific email by ID
+      operationId: scanEmail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Gmail message ID
+      responses:
+        '200':
+          description: Email scanned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailScanResult'
+        '404':
+          description: Email not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /email/batch-scan:
+    post:
+      tags:
+        - Email
+      summary: Batch scan multiple emails
+      operationId: batchScanEmails
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message_ids
+              properties:
+                message_ids:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 1000
+                  description: List of Gmail message IDs
+                batch_size:
+                  type: integer
+                  default: 50
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Batch scan completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmailScanResult'
+                  total_scanned:
+                    type: integer
+                  fraud_detected:
+                    type: integer
+                  batch_id:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /email/mark-spam:
+    post:
+      tags:
+        - Email
+      summary: Mark emails as spam
+      operationId: markAsSpam
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message_ids
+              properties:
+                message_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Emails marked as spam
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  marked_count:
+                    type: integer
+
+  /email/create-filter:
+    post:
+      tags:
+        - Email
+      summary: Create email filter (Admin only)
+      operationId: createEmailFilter
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailFilter'
+      responses:
+        '201':
+          description: Filter created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filter_id:
+                    type: string
+                  success:
+                    type: boolean
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /email/monitor/start:
+    post:
+      tags:
+        - Email
+        - Monitoring
+      summary: Start real-time email monitoring
+      operationId: startEmailMonitoring
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                check_interval:
+                  type: integer
+                  default: 300
+                  minimum: 60
+                  description: Check interval in seconds
+                callback_url:
+                  type: string
+                  format: uri
+                  description: Webhook URL for notifications
+                auto_actions:
+                  type: object
+                  properties:
+                    mark_spam:
+                      type: boolean
+                      default: true
+                    delete_high_risk:
+                      type: boolean
+                      default: false
+      responses:
+        '200':
+          description: Monitoring started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monitoring:
+                    type: boolean
+                  monitor_id:
+                    type: string
+                  next_check:
+                    type: string
+                    format: date-time
+
+  /email/stats:
+    get:
+      tags:
+        - Email
+        - Reports
+      summary: Get email security statistics
+      operationId: getEmailStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailStats'
+
+  # Analysis Endpoints
+  /analyze/text:
+    post:
+      tags:
+        - Analysis
+      summary: Analyze text for fraud
+      operationId: analyzeText
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 50000
+                  description: Text content to analyze
+                content_type:
+                  type: string
+                  enum: [text, email, url, sms]
+                  default: text
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudAnalysisResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /analyze/image:
+    post:
+      tags:
+        - Analysis
+      summary: Analyze image for manipulation
+      operationId: analyzeImage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file (JPEG, PNG, etc.)
+                check_deepfake:
+                  type: boolean
+                  default: true
+                check_manipulation:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Image analyzed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageAnalysisResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /analyze/document:
+    post:
+      tags:
+        - Analysis
+      summary: Validate document authenticity
+      operationId: analyzeDocument
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - document
+              properties:
+                document:
+                  type: string
+                  format: binary
+                  description: Document file (PDF, DOCX, etc.)
+                document_type:
+                  type: string
+                  enum: [invoice, contract, certificate, id, other]
+      responses:
+        '200':
+          description: Document analyzed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAnalysisResult'
+
+  /analyze/batch:
+    post:
+      tags:
+        - Analysis
+      summary: Batch analysis (User/Admin only)
+      operationId: batchAnalysis
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  maxItems: 100
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        enum: [text, email, url]
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: Batch analysis complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FraudAnalysisResult'
+                  total:
+                    type: integer
+                  fraud_count:
+                    type: integer
+
+  # Monitoring Endpoints
+  /monitor/status:
+    get:
+      tags:
+        - Monitoring
+      summary: Get monitoring status
+      operationId: getMonitoringStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Monitoring status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email_monitoring:
+                    type: boolean
+                  realtime_protection:
+                    type: boolean
+                  last_check:
+                    type: string
+                    format: date-time
+                  next_check:
+                    type: string
+                    format: date-time
+                  active_monitors:
+                    type: integer
+
+  # Reports Endpoints
+  /reports/generate:
+    post:
+      tags:
+        - Reports
+      summary: Generate fraud report
+      operationId: generateReport
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - start_date
+                - end_date
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                format:
+                  type: string
+                  enum: [pdf, csv, json, html]
+                  default: pdf
+                include_details:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Report generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                  download_url:
+                    type: string
+                    format: uri
+                  expires_at:
+                    type: string
+                    format: date-time
+
+  # Admin Endpoints
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: List all users (Admin only)
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponse'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # Health Check
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: boolean
+                      redis:
+                        type: boolean
+                      gmail_api:
+                        type: boolean
+
+components:
+  schemas:
+    UserCreate:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UserRole:
+      type: string
+      enum:
+        - admin
+        - user
+        - viewer
+        - api_user
+
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          default: bearer
+        expires_in:
+          type: integer
+
+    EmailScanResult:
+      type: object
+      properties:
+        message_id:
+          type: string
+        subject:
+          type: string
+        from_address:
+          type: string
+        date:
+          type: string
+          format: date-time
+        is_fraud:
+          type: boolean
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        fraud_type:
+          type: string
+          enum: [phishing, scam, malware, impersonation, bec, none]
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 10
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        explanation:
+          type: string
+        recommended_action:
+          type: string
+          enum: [allow, review, quarantine, block]
+
+    EmailFilter:
+      type: object
+      properties:
+        from_address:
+          type: string
+        to_address:
+          type: string
+        subject_contains:
+          type: string
+        body_contains:
+          type: string
+        has_attachment:
+          type: boolean
+        action:
+          type: string
+          enum: [delete, spam, archive, label]
+
+    EmailStats:
+      type: object
+      properties:
+        total_scanned:
+          type: integer
+        fraud_detected:
+          type: integer
+        fraud_rate:
+          type: number
+        common_fraud_types:
+          type: object
+          additionalProperties:
+            type: integer
+        high_risk_senders:
+          type: array
+          items:
+            type: string
+        blocked_count:
+          type: integer
+        false_positives:
+          type: integer
+
+    FraudAnalysisResult:
+      type: object
+      properties:
+        is_fraud:
+          type: boolean
+        confidence:
+          type: number
+        fraud_types:
+          type: array
+          items:
+            type: string
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        explanation:
+          type: string
+        indicators:
+          type: array
+          items:
+            type: string
+        request_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ImageAnalysisResult:
+      type: object
+      properties:
+        is_manipulated:
+          type: boolean
+        manipulation_confidence:
+          type: number
+        is_deepfake:
+          type: boolean
+        deepfake_confidence:
+          type: number
+        manipulation_types:
+          type: array
+          items:
+            type: string
+        authenticity_score:
+          type: number
+        metadata:
+          type: object
+
+    DocumentAnalysisResult:
+      type: object
+      properties:
+        is_authentic:
+          type: boolean
+        confidence:
+          type: number
+        document_type:
+          type: string
+        issues_found:
+          type: array
+          items:
+            type: string
+        verification_status:
+          type: string
+          enum: [verified, suspicious, fraudulent, inconclusive]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        status_code:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication
+
+security:
+  - bearerAuth: []
+  - apiKey: []

@@ -42,5 +42,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port for API/demo
 EXPOSE 8000
 
-# Default command
-CMD ["python", "-m", "fraudlens.api.server"]
+# Default command - run the main API
+CMD ["python", "-m", "fraudlens.api.main"]

@@ -31,10 +31,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import the analytics dashboard
 try:
-    from demo.fraud_analytics_dashboard import FraudAnalyticsDashboard
+    # Try relative import first (when running from demo directory)
+    from fraud_analytics_dashboard import FraudAnalyticsDashboard
     DASHBOARD_AVAILABLE = True
 except ImportError:
-    DASHBOARD_AVAILABLE = False
+    try:
+        # Try absolute import (when running from project root)
+        from demo.fraud_analytics_dashboard import FraudAnalyticsDashboard
+        DASHBOARD_AVAILABLE = True
+    except ImportError:
+        DASHBOARD_AVAILABLE = False
 
 # Custom CSS for better styling
 def load_custom_css():

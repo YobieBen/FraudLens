@@ -42,7 +42,7 @@ class TestEmailAPIEndpoints:
             is_active=True,
             is_verified=True,
             role=UserRole.USER,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         # Generate tokens
@@ -61,10 +61,10 @@ class TestEmailAPIEndpoints:
             is_active=True,
             is_verified=True,
             role=UserRole.ADMIN,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-        access_token, refresh_token = create_tokens({"sub": user.username})
+        access_token, refresh_token = create_tokens(user)
 
         return {"Authorization": f"Bearer {access_token}"}
 
@@ -85,10 +85,9 @@ class TestEmailAPIEndpoints:
     def test_scan_endpoint_unauthorized(self, client):
         """Test scan endpoint without authentication"""
         # The actual endpoint is /analyze/text not /scan
-        response = client.post("/analyze/text", json={
-            "content": "test content",
-            "content_type": "text"
-        })
+        response = client.post(
+            "/analyze/text", json={"content": "test content", "content_type": "text"}
+        )
 
         assert response.status_code in [401, 422]  # 401 for auth, 422 for validation
 
@@ -173,9 +172,9 @@ class TestEmailAPIEndpoints:
         responses = []
         for _ in range(15):  # Exceed rate limit
             response = client.post(
-                "/analyze/text", 
-                json={"content": "test", "content_type": "text"}, 
-                headers=auth_headers
+                "/analyze/text",
+                json={"content": "test", "content_type": "text"},
+                headers=auth_headers,
             )
             responses.append(response)
 
@@ -239,9 +238,7 @@ class TestEmailAPIEndpoints:
         """Test API error handling"""
         # Test with invalid data for the actual endpoint
         response = client.post(
-            "/analyze/text", 
-            json={"invalid_field": "test"}, 
-            headers=auth_headers
+            "/analyze/text", json={"invalid_field": "test"}, headers=auth_headers
         )
 
         assert response.status_code in [401, 422]  # Auth or validation error
@@ -269,12 +266,11 @@ class TestAPIAuthentication:
                 is_active=True,
                 is_verified=True,
                 role=UserRole.USER,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             response = client.post(
-                "/auth/token", 
-                data={"username": "testuser", "password": "password"}
+                "/auth/token", data={"username": "testuser", "password": "password"}
             )
 
             # Auth might fail for various reasons in test environment
@@ -296,14 +292,14 @@ class TestAPIAuthentication:
             is_active=True,
             is_verified=True,
             role=UserRole.USER,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         access_token, refresh_token = create_tokens(mock_user)
 
         response = client.post(
-            "/auth/refresh", 
+            "/auth/refresh",
             json={"refresh_token": refresh_token},
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         # Auth might fail in test environment
@@ -318,9 +314,7 @@ class TestAPIAuthentication:
         headers = {"Authorization": "Bearer invalid_token"}
 
         response = client.post(
-            "/analyze/text", 
-            json={"content": "test", "content_type": "text"}, 
-            headers=headers
+            "/analyze/text", json={"content": "test", "content_type": "text"}, headers=headers
         )
 
         assert response.status_code in [401, 403]  # Unauthorized or Forbidden

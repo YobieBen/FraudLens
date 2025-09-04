@@ -84,14 +84,14 @@ class TestGmailFraudScanner:
         scanner = GmailFraudScanner()
         scanner.service = mock_service
         scanner.pipeline = mock_pipeline
-        
+
         # Mock pipeline process method
         mock_pipeline.process.return_value = AsyncMock()
         mock_pipeline.process.return_value.fraud_score = 0.3
         mock_pipeline.process.return_value.fraud_types = []
         mock_pipeline.process.return_value.confidence = 0.9
         mock_pipeline.process.return_value.explanation = "Safe email"
-        
+
         # Mock email message
         mock_message = {
             "id": "test_message_id",
@@ -107,10 +107,10 @@ class TestGmailFraudScanner:
         }
 
         mock_service.users().messages().get().execute.return_value = mock_message
-        
+
         # Mock label operations
         mock_service.users().messages().modify().execute.return_value = {}
-        
+
         result = await scanner.process_email("test_message_id")
 
         assert isinstance(result, EmailAnalysisResult)
@@ -124,7 +124,7 @@ class TestGmailFraudScanner:
         # Mock list messages response
         mock_list_response = {"messages": [{"id": "msg1"}, {"id": "msg2"}]}
         mock_service.users().messages().list().execute.return_value = mock_list_response
-        
+
         # Mock process_email to return valid results
         with patch.object(scanner, "process_email") as mock_process:
             mock_process.return_value = EmailAnalysisResult(
@@ -144,9 +144,9 @@ class TestGmailFraudScanner:
                 attachment_scores=[],
                 combined_score=0.1,
                 flagged=False,
-                error=None
+                error=None,
             )
-            
+
             results = await scanner.stream_emails(max_results=2)
             assert isinstance(results, list)
             assert len(results) <= 2
@@ -218,7 +218,7 @@ class TestGmailFraudScanner:
                     attachment_scores=[],
                     combined_score=0.1,
                     flagged=False,
-                    error=None
+                    error=None,
                 )
             ]
 
@@ -247,7 +247,7 @@ class TestGmailFraudScanner:
         scanner = GmailFraudScanner()
         scanner.service = MagicMock()
         scanner.service.users().messages().get().execute.side_effect = Exception("API Error")
-        
+
         # Initialize pipeline to avoid NoneType errors
         scanner.pipeline = MagicMock()
 

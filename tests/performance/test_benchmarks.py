@@ -263,7 +263,7 @@ class TestEmailProcessingBenchmarks(PerformanceBenchmark):
                     attachment_scores=[],
                     combined_score=0.1,
                     flagged=False,
-                    error=None
+                    error=None,
                 )
             )
         return emails

@@ -13,12 +13,12 @@ import hashlib
 import json
 import re
 import ssl
-import certifi
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
 import aiohttp
+import certifi
 from loguru import logger
 
 

@@ -31,7 +31,6 @@ from fraudlens.core.resource_manager.manager import ResourceManager
 from fraudlens.pipelines.async_pipeline import AsyncPipeline
 from fraudlens.utils.config import ConfigManager
 
-
 console = Console()
 
 

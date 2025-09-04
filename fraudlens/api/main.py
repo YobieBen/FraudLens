@@ -3,45 +3,46 @@ FraudLens RESTful API Implementation
 Comprehensive fraud detection API with integrations and compliance features
 """
 
-import os
-import json
-import uuid
-import hashlib
 import asyncio
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+import hashlib
+import json
+import os
+import tempfile
+import uuid
 from datetime import datetime, timedelta
 from io import BytesIO
-import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
+import aiofiles
 from fastapi import (
+    BackgroundTasks,
+    Depends,
     FastAPI,
     File,
-    UploadFile,
-    HTTPException,
-    Depends,
-    Security,
-    BackgroundTasks,
-    Request,
-    Query,
     Header,
+    HTTPException,
+    Query,
+    Request,
+    Security,
+    UploadFile,
 )
-from fastapi.security import OAuth2PasswordBearer, APIKeyHeader
-from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, EmailStr, HttpUrl
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-import aiofiles
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from loguru import logger
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+from fraudlens.compliance.manager import ComplianceManager
+from fraudlens.core.config import Config
 
 # Import FraudLens components
 from fraudlens.core.pipeline import FraudDetectionPipeline
-from fraudlens.core.config import Config
-from fraudlens.monitoring.monitor import FraudLensMonitor
 from fraudlens.integration.manager import IntegrationManager
-from fraudlens.compliance.manager import ComplianceManager
+from fraudlens.monitoring.monitor import FraudLensMonitor
 
 
 # Request/Response Models

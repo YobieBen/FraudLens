@@ -3,21 +3,22 @@ FraudLens Zero-Downtime Upgrade System
 Handles model hot-swapping, database migrations, and rolling deployments
 """
 
-import os
-import sys
-import json
-import time
-import shutil
 import hashlib
+import json
+import os
+import shutil
 import subprocess
+import sys
 import threading
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-import semver
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import requests
+import semver
 from loguru import logger
 
 

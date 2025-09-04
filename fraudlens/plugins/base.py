@@ -8,7 +8,7 @@ Date: 2025-08-26 18:34:00 PDT
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from fraudlens.core.base.detector import FraudDetector
 from fraudlens.core.base.processor import ModalityProcessor

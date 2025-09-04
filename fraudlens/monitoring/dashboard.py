@@ -3,20 +3,20 @@ FraudLens Real-time Monitoring Dashboard
 Interactive dashboard for monitoring system performance and fraud detection metrics
 """
 
-import time
-import json
-import psutil
 import asyncio
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import json
+import time
+from collections import defaultdict, deque
 from datetime import datetime, timedelta
-from collections import deque, defaultdict
-import numpy as np
-import pandas as pd
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import gradio as gr
-import plotly.graph_objects as go
+import numpy as np
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+import psutil
 from plotly.subplots import make_subplots
 
 from fraudlens.monitoring.monitor import FraudLensMonitor

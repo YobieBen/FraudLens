@@ -9,7 +9,6 @@ import asyncio
 import gc
 import os
 import platform
-import psutil
 import resource
 import sys
 import time
@@ -18,6 +17,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+
+import psutil
 
 try:
     import mlx.core as mx

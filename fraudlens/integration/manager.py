@@ -3,29 +3,30 @@ FraudLens Integration Manager
 Handles connections to external systems and data sources
 """
 
-import os
-import json
 import asyncio
-import imaplib
-import smtplib
 import email
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+import hashlib
+import imaplib
+import json
+import os
+import smtplib
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import hashlib
+from email.mime.text import MIMEText
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
 import boto3
-import psycopg2
-from pymongo import MongoClient
-import redis
 import pika
-from kafka import KafkaProducer, KafkaConsumer
-from google.cloud import storage as gcs
-from azure.storage.blob import BlobServiceClient
+import psycopg2
+import redis
 import requests
+from azure.storage.blob import BlobServiceClient
+from google.cloud import storage as gcs
+from kafka import KafkaConsumer, KafkaProducer
 from loguru import logger
+from pymongo import MongoClient
 
 
 @dataclass

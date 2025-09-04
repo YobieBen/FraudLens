@@ -3,22 +3,24 @@ Unit tests for Gmail integration
 Tests Gmail API integration functionality
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
-from datetime import datetime
 import base64
 import json
-from typing import Dict, Any
 
 # Add parent directory to path
 import sys
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from fraudlens.api.gmail_integration import GmailFraudScanner, EmailAnalysisResult, EmailAction
 from dataclasses import asdict
+
+from fraudlens.api.gmail_integration import EmailAction, EmailAnalysisResult, GmailFraudScanner
 
 
 class TestGmailFraudScanner:

@@ -208,8 +208,9 @@ class DocumentForgeryDetector:
 
     def _perform_ela(self, image: np.ndarray) -> float:
         """Perform Error Level Analysis."""
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         # Convert to PIL Image
         if image.dtype != np.uint8:
@@ -677,8 +678,9 @@ class DocumentForgeryDetector:
 
     def _create_ela_map(self, image: np.ndarray) -> np.ndarray:
         """Create ELA map for visualization."""
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         if image.dtype != np.uint8:
             image = (image * 255).astype(np.uint8)

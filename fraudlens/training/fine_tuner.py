@@ -6,17 +6,18 @@ Date: 2025-08-28
 """
 
 import json
-import torch
-import numpy as np
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
-from loguru import logger
+
+import numpy as np
+import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
+from loguru import logger
 from PIL import Image
+from torch.utils.data import DataLoader, Dataset
 
 
 class FakeDocumentDataset(Dataset):

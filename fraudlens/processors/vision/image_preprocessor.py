@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 import numpy as np
-from PIL import Image, ImageOps
 from loguru import logger
+from PIL import Image, ImageOps
 
 
 class ImagePreprocessor:

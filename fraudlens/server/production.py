@@ -3,39 +3,39 @@ FraudLens Production Server
 High-performance server with authentication, rate limiting, and monitoring
 """
 
-import os
-import jwt
-import time
-import uuid
-import redis
 import asyncio
 import hashlib
-import secrets
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
-from collections import defaultdict, deque
 import json
+import os
+import secrets
+import time
+import uuid
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, HTTPException, Depends, Security, Request, BackgroundTasks
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import jwt
+import redis
+import uvicorn
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-import uvicorn
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from prometheus_client import Counter, Histogram, Gauge, generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from loguru import logger
+from prometheus_client import Counter, Gauge, Histogram, generate_latest
+from pydantic import BaseModel, Field
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+from fraudlens.core.config import Config
 
 # Import FraudLens components
 from fraudlens.core.pipeline import FraudDetectionPipeline
-from fraudlens.core.config import Config
 from fraudlens.monitoring.monitor import FraudLensMonitor
-
 
 # Metrics
 request_count = Counter(

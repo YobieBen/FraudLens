@@ -14,8 +14,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-import pytest
 import numpy as np
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,12 +28,12 @@ from fraudlens.core.base.detector import (
 )
 from fraudlens.core.base.processor import ModalityProcessor, ProcessedData
 from fraudlens.core.base.scorer import RiskAssessment, RiskLevel, RiskScorer
+from fraudlens.core.registry.model_registry import ModelFormat, ModelRegistry, QuantizationType
 from fraudlens.core.resource_manager.manager import ResourceManager
-from fraudlens.core.registry.model_registry import ModelRegistry, ModelFormat, QuantizationType
 from fraudlens.pipelines.async_pipeline import AsyncPipeline
-from fraudlens.utils.config import ConfigManager
 from fraudlens.plugins.base import FraudLensPlugin, PluginMetadata
 from fraudlens.plugins.loader import PluginLoader
+from fraudlens.utils.config import ConfigManager
 
 
 class TestFraudDetector(FraudDetector):
@@ -215,8 +215,8 @@ class TestE2EFraudLens:
 
         # Test core imports
         from fraudlens.core.base import detector, processor, scorer
-        from fraudlens.core.resource_manager import manager
         from fraudlens.core.registry import model_registry
+        from fraudlens.core.resource_manager import manager
         from fraudlens.pipelines import async_pipeline
         from fraudlens.plugins import base, loader
         from fraudlens.utils import config, logging

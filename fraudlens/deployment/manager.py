@@ -3,18 +3,19 @@ FraudLens Deployment Manager
 Handles packaging, containerization, and cloud deployment
 """
 
-import os
-import sys
+import hashlib
 import json
-import yaml
+import os
 import shutil
 import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any
+import sys
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime
-import tempfile
-import hashlib
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 @dataclass

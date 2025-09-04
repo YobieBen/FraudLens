@@ -20,8 +20,8 @@ from typing import Any, Dict, List, Optional, Type
 
 from fraudlens.core.base.detector import FraudDetector
 from fraudlens.core.base.processor import ModalityProcessor
-from fraudlens.testing.test_suite import FraudLensTestSuite
 from fraudlens.testing.evaluation import FraudDetectionEvaluator
+from fraudlens.testing.test_suite import FraudLensTestSuite
 
 
 @dataclass

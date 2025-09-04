@@ -6,11 +6,12 @@ Date: 2025-08-28
 """
 
 import asyncio
+
 from fraudlens.core.pipeline import FraudDetectionPipeline
 from fraudlens.integrations import (
-    ThreatIntelligenceManager,
     DocumentValidator,
     PhishingDatabaseConnector,
+    ThreatIntelligenceManager,
 )
 
 
@@ -220,7 +221,7 @@ async def test_pipeline_integration():
     if result:
         print(f"Text Fraud Detection:")
         print(f"   Fraud Score: {result.fraud_score:.0f}%")
-        print(f"   Fraud Types: {', '.join(result.fraud_types) if result.fraud_types else 'None'}")
+        print(f"   Fraud Types: {', '.join(str(ft.value if hasattr(ft, 'value') else ft) for ft in result.fraud_types) if result.fraud_types else 'None'}")
 
         # Enhance with threat intel
         enhanced = await pipeline.enhance_detection_with_intel(result)

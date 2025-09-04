@@ -3,16 +3,17 @@ Gmail IMAP Integration for FraudLens
 Provides real email access using IMAP with app passwords
 """
 
-import imaplib
+import asyncio
+import base64
 import email
-from email.header import decode_header
+import imaplib
 import re
 import ssl
-from typing import List, Dict, Optional, Tuple
 from datetime import datetime
-import asyncio
+from email.header import decode_header
+from typing import Dict, List, Optional, Tuple
+
 from loguru import logger
-import base64
 
 
 class GmailIMAPScanner:
@@ -38,8 +39,9 @@ class GmailIMAPScanner:
         """
         try:
             # Try multiple SSL connection methods
-            import certifi
             import platform
+
+            import certifi
 
             # Method 1: Try with certifi certificates
             try:

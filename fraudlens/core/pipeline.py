@@ -17,14 +17,14 @@ from fraudlens.core.base.detector import DetectionResult, Modality
 from fraudlens.core.config import Config
 from fraudlens.core.registry.model_registry import ModelRegistry
 from fraudlens.core.resource_manager.manager import ResourceManager
+from fraudlens.integrations import (
+    DocumentValidator,
+    PhishingDatabaseConnector,
+    ThreatIntelligenceManager,
+)
 from fraudlens.plugins.manager import PluginManager
 from fraudlens.processors.text.detector import TextFraudDetector
 from fraudlens.processors.vision.detector import VisionFraudDetector
-from fraudlens.integrations import (
-    ThreatIntelligenceManager,
-    DocumentValidator,
-    PhishingDatabaseConnector,
-)
 
 
 class FraudDetectionPipeline:

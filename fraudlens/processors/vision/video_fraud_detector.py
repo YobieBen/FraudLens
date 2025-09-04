@@ -3,18 +3,19 @@ Advanced Video Fraud Detection Module
 Implements video analysis for fraud detection including deepfakes
 """
 
+import hashlib
+import tempfile
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass
-from pathlib import Path
-import tempfile
-import hashlib
 from loguru import logger
-from enum import Enum
 
 try:
     import mediapipe as mp

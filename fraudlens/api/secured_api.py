@@ -3,36 +3,38 @@ FraudLens Secured REST API
 Implements JWT authentication, rate limiting, and role-based access control
 """
 
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Header, Body
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, APIKeyHeader
+import asyncio
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
-import asyncio
-from pathlib import Path
-import sys
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from loguru import logger
+from pydantic import BaseModel, Field
+
 from fraudlens.api.auth import (
-    auth_manager,
-    UserCreate,
-    UserInDB,
     Token,
     TokenData,
+    UserCreate,
+    UserInDB,
     UserRole,
-    create_tokens,
-    verify_token,
+    auth_manager,
     authenticate_user,
-    create_api_key,
-    verify_api_key,
     check_rate_limit,
+    create_api_key,
+    create_tokens,
+    verify_api_key,
+    verify_token,
 )
 from fraudlens.core.pipeline import FraudDetectionPipeline
-from pydantic import BaseModel, Field
-from loguru import logger
 
 # FastAPI app
 app = FastAPI(

@@ -14,8 +14,8 @@ from typing import Any, Dict, List
 
 import numpy as np
 import requests
-from PIL import Image
 from loguru import logger
+from PIL import Image
 
 
 class GradioE2ETester:
@@ -81,8 +81,8 @@ class GradioE2ETester:
         """Create a test PDF for testing."""
         # Create a simple PDF with reportlab or just use a text file as fallback
         try:
-            from reportlab.pdfgen import canvas
             from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(str(path), pagesize=letter)
             c.drawString(100, 750, "TEST FINANCIAL DOCUMENT")

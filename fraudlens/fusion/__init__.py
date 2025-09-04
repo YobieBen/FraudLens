@@ -8,38 +8,38 @@ Author: Yobie Benjamin
 Date: 2025
 """
 
-from fraudlens.fusion.fusion_engine import (
-    MultiModalFraudFusion,
-    FusionStrategy,
-    FusedResult,
-    RiskScore,
-)
-from fraudlens.fusion.risk_scorer import (
-    RiskScoringEngine,
-    BayesianRiskAggregator,
-    AnomalyDetector,
-    TimeSeriesAnalyzer,
-)
-from fraudlens.fusion.validators import (
-    CrossModalValidator,
-    ConsistencyReport,
-    ValidationResult,
-)
-from fraudlens.fusion.pattern_matcher import (
-    FraudPatternMatcher,
-    PatternLibrary,
-    Pattern,
-    Match,
-)
-from fraudlens.fusion.explainer import (
-    ExplanationGenerator,
-    Explanation,
-    ReportExporter,
-)
 from fraudlens.fusion.adaptive_learning import (
     AdaptiveLearner,
     OnlineLearner,
     ThresholdOptimizer,
+)
+from fraudlens.fusion.explainer import (
+    Explanation,
+    ExplanationGenerator,
+    ReportExporter,
+)
+from fraudlens.fusion.fusion_engine import (
+    FusedResult,
+    FusionStrategy,
+    MultiModalFraudFusion,
+    RiskScore,
+)
+from fraudlens.fusion.pattern_matcher import (
+    FraudPatternMatcher,
+    Match,
+    Pattern,
+    PatternLibrary,
+)
+from fraudlens.fusion.risk_scorer import (
+    AnomalyDetector,
+    BayesianRiskAggregator,
+    RiskScoringEngine,
+    TimeSeriesAnalyzer,
+)
+from fraudlens.fusion.validators import (
+    ConsistencyReport,
+    CrossModalValidator,
+    ValidationResult,
 )
 
 __all__ = [

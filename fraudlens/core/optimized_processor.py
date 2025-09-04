@@ -3,23 +3,25 @@ FraudLens Optimized File Processor
 Handles large file processing with streaming, chunking, and memory optimization
 """
 
-import os
-import io
-import hashlib
-import mmap
-from pathlib import Path
-from typing import Any, Dict, Optional, List, Generator, Callable
-from dataclasses import dataclass
 import asyncio
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import hashlib
+import io
+import mmap
 import multiprocessing
-from loguru import logger
-import tempfile
+import os
 import shutil
-from PIL import Image
-import numpy as np
+import tempfile
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Dict, Generator, List, Optional
+
 import cv2
-from .progress_tracker import progress_tracker, ProgressContext
+import numpy as np
+from loguru import logger
+from PIL import Image
+
+from .progress_tracker import ProgressContext, progress_tracker
 
 
 @dataclass

@@ -4,14 +4,15 @@ Provides progress tracking for long-running operations
 """
 
 import asyncio
-from typing import Optional, Callable, Dict, Any, List
+import time
+from concurrent.futures import Future
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from threading import Lock
-from concurrent.futures import Future
-import time
-from loguru import logger
 from enum import Enum
+from threading import Lock
+from typing import Any, Callable, Dict, List, Optional
+
+from loguru import logger
 
 
 class ProgressStatus(Enum):

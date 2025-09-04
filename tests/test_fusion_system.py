@@ -14,6 +14,7 @@ from typing import Dict, List
 import numpy as np
 import pytest
 
+from fraudlens.core.base.detector import DetectionResult, FraudType, Modality
 from fraudlens.fusion.adaptive_learning import (
     ABTestFramework,
     AdaptiveLearner,
@@ -42,7 +43,6 @@ from fraudlens.fusion.risk_scorer import (
     TimeSeriesAnalyzer,
 )
 from fraudlens.fusion.validators import ConsistencyReport, CrossModalValidator
-from fraudlens.core.base.detector import DetectionResult, FraudType, Modality
 
 
 class TestMultiModalFusion:

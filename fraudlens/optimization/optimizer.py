@@ -3,16 +3,17 @@ FraudLens Model Optimization Pipeline
 Supports quantization, pruning, and performance optimization for Mac M4 deployment
 """
 
-import os
 import json
+import os
 import time
-import psutil
 import tracemalloc
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
+import psutil
 
 # Model optimization libraries
 try:
@@ -27,7 +28,7 @@ except ImportError:
 try:
     import onnx
     import onnxruntime as ort
-    from onnxruntime.quantization import quantize_dynamic, QuantType
+    from onnxruntime.quantization import QuantType, quantize_dynamic
 
     ONNX_AVAILABLE = True
 except ImportError:

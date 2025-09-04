@@ -6,7 +6,7 @@ Date: 2025-08-26 18:34:00 PDT
 """
 
 import asyncio
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from fraudlens.pipelines.async_pipeline import AsyncPipeline
 

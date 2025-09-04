@@ -32,9 +32,9 @@ from loguru import logger
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from fraudlens.core.pipeline import FraudDetectionPipeline
-from fraudlens.core.config import Config
 from fraudlens.core.base.detector import DetectionResult, FraudType, Modality
+from fraudlens.core.config import Config
+from fraudlens.core.pipeline import FraudDetectionPipeline
 
 
 class ComprehensiveTestSuite:

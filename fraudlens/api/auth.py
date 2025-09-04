@@ -3,21 +3,22 @@ FraudLens API Authentication and Security Module
 Implements JWT authentication, API key management, and role-based access control
 """
 
+import hashlib
+import json
 import os
 import secrets
-import hashlib
-from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any
-from enum import Enum
-import jwt
-from passlib.context import CryptContext
-from pydantic import BaseModel, Field, EmailStr
 import sqlite3
-import json
-from pathlib import Path
+from datetime import datetime, timedelta
+from enum import Enum
 from functools import wraps
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import jwt
 import redis
 from loguru import logger
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr, Field
 
 # Security configuration
 SECRET_KEY = os.getenv("FRAUDLENS_SECRET_KEY", secrets.token_urlsafe(32))

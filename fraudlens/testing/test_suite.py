@@ -27,8 +27,8 @@ from memory_profiler import profile
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from fraudlens.core.base.detector import DetectionResult, FraudType
-from fraudlens.core.pipeline import FraudDetectionPipeline
 from fraudlens.core.config import Config
+from fraudlens.core.pipeline import FraudDetectionPipeline
 
 
 @dataclass

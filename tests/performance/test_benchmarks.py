@@ -3,30 +3,30 @@ Performance benchmarks for FraudLens
 Tests system performance, throughput, and scalability
 """
 
-import pytest
 import asyncio
-import time
-import psutil
+import concurrent.futures
+import cProfile
+import io
+import pstats
 import statistics
-from typing import List, Dict, Any, Tuple
+import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import numpy as np
-import concurrent.futures
-from memory_profiler import profile
-import cProfile
-import pstats
-import io
-
-import sys
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
+import psutil
+import pytest
+from memory_profiler import profile
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from fraudlens.core.pipeline import FraudDetectionPipeline
-from fraudlens.core.optimized_processor import LargeFileProcessor
+from fraudlens.api.gmail_integration import EmailAction, EmailAnalysisResult, GmailFraudScanner
 from fraudlens.core.cache_manager import cache_manager
-from fraudlens.api.gmail_integration import GmailFraudScanner, EmailAnalysisResult, EmailAction
+from fraudlens.core.optimized_processor import LargeFileProcessor
+from fraudlens.core.pipeline import FraudDetectionPipeline
 from fraudlens.processors.text.detector import TextFraudDetector
 from fraudlens.processors.vision.detector import VisionFraudDetector
 

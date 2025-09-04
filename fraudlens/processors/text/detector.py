@@ -26,15 +26,15 @@ from fraudlens.core.base.detector import (
     FraudType,
     Modality,
 )
-from fraudlens.processors.text.analyzers.phishing import PhishingAnalyzer
-from fraudlens.processors.text.analyzers.social_engineering import SocialEngineeringAnalyzer
 from fraudlens.processors.text.analyzers.financial_document import FinancialDocumentAnalyzer
 from fraudlens.processors.text.analyzers.money_laundering import MoneyLaunderingAnalyzer
+from fraudlens.processors.text.analyzers.phishing import PhishingAnalyzer
+from fraudlens.processors.text.analyzers.social_engineering import SocialEngineeringAnalyzer
+from fraudlens.processors.text.cache_manager import CacheManager
 from fraudlens.processors.text.feature_extractor import FeatureExtractor
 from fraudlens.processors.text.llm_manager import LLMManager
-from fraudlens.processors.text.cache_manager import CacheManager
-from fraudlens.processors.vision.video_fraud_detector import VideoFraudDetector, VideoAnalysisResult
-from fraudlens.processors.vision.deepfake_detector import DeepfakeDetector, DeepfakeDetectionResult
+from fraudlens.processors.vision.deepfake_detector import DeepfakeDetectionResult, DeepfakeDetector
+from fraudlens.processors.vision.video_fraud_detector import VideoAnalysisResult, VideoFraudDetector
 
 
 @dataclass

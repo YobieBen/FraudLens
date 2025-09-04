@@ -3,12 +3,13 @@ FraudLens Environment Configuration Management
 Centralized configuration with environment variable support
 """
 
-import os
-from typing import List, Optional, Any
-from pathlib import Path
-from pydantic import BaseSettings, Field, validator
-from dotenv import load_dotenv
 import json
+import os
+from pathlib import Path
+from typing import Any, List, Optional
+
+from dotenv import load_dotenv
+from pydantic import BaseSettings, Field, validator
 
 # Load environment variables
 env_file = os.getenv("ENV_FILE", ".env")

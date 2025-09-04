@@ -5,27 +5,26 @@ Processes emails with attachments for fraud detection
 
 import asyncio
 import base64
-import os
-import tempfile
-from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
 import json
 import mimetypes
+import os
+import pickle
+import tempfile
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-import pickle
-
 from loguru import logger
-from dataclasses import dataclass, asdict
-from enum import Enum
 
-from ..core.pipeline import FraudDetectionPipeline
 from ..core.base.detector import FraudType
+from ..core.pipeline import FraudDetectionPipeline
 
 
 class EmailAction(Enum):

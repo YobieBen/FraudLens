@@ -6,11 +6,10 @@ Date: 2025-08-26 18:34:00 PDT
 """
 
 import hashlib
+import json
 import re
 from collections import Counter
 from typing import Any, Dict, List, Optional, Set, Tuple
-
-import json
 
 
 class FeatureExtractor:

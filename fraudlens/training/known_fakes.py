@@ -10,9 +10,10 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
+
+import cv2
 import numpy as np
 from loguru import logger
-import cv2
 
 
 class KnownFakeDatabase:

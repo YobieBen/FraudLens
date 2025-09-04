@@ -90,8 +90,9 @@ class ManipulationDetector:
 
     def _simple_ela(self, image: np.ndarray) -> float:
         """Simple Error Level Analysis."""
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         if image.dtype != np.uint8:
             image = (image * 255).astype(np.uint8)

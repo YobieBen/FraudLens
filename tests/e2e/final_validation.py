@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import requests
-from PIL import Image, ImageDraw
 from loguru import logger
+from PIL import Image, ImageDraw
 
 
 class FinalE2EValidation:

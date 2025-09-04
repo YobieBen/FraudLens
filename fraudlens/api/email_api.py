@@ -3,19 +3,19 @@ REST API for Email Fraud Detection
 FastAPI endpoints for Gmail integration and bulk processing
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Body, File, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import asyncio
-import json
 import io
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .gmail_integration import GmailFraudScanner, EmailAction, EmailAnalysisResult
+from fastapi import BackgroundTasks, Body, FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
+from pydantic import BaseModel, Field
 
+from .gmail_integration import EmailAction, EmailAnalysisResult, GmailFraudScanner
 
 # FastAPI app
 app = FastAPI(

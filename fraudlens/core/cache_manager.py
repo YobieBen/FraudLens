@@ -3,19 +3,20 @@ FraudLens Cache Manager
 Implements Redis caching for fraud detection results with fallback to in-memory cache
 """
 
-import os
-import json
+import asyncio
 import hashlib
+import json
+import os
 import pickle
 import time
-from typing import Any, Dict, Optional, List, Tuple
-from datetime import datetime, timedelta
 from collections import OrderedDict
+from datetime import datetime, timedelta
+from functools import wraps
 from threading import Lock
+from typing import Any, Dict, List, Optional, Tuple
+
 import redis
 from loguru import logger
-import asyncio
-from functools import wraps
 
 
 class CacheConfig:

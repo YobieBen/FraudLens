@@ -3,17 +3,18 @@ Advanced Deepfake Detection Module
 Implements state-of-the-art deepfake detection for images and videos
 """
 
+import hashlib
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass
-from pathlib import Path
-import hashlib
 from loguru import logger
-from enum import Enum
 
 try:
     import mediapipe as mp
@@ -23,8 +24,8 @@ except ImportError:
     MEDIAPIPE_AVAILABLE = False
     mp = None
 
-from PIL import Image
 import torchvision.transforms as transforms
+from PIL import Image
 
 try:
     from scipy import signal

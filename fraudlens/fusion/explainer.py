@@ -15,9 +15,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from loguru import logger
 
+from fraudlens.core.base.detector import FraudType
 from fraudlens.fusion.fusion_engine import FusedResult, RiskScore
 from fraudlens.fusion.validators import ConsistencyReport
-from fraudlens.core.base.detector import FraudType
 
 
 @dataclass
@@ -628,11 +628,11 @@ class ReportExporter:
     ) -> None:
         """Export as PDF."""
         try:
-            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import A4, letter
             from reportlab.lib.styles import getSampleStyleSheet
             from reportlab.lib.units import inch
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-            from reportlab.lib import colors
+            from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
             doc = SimpleDocTemplate(str(output_path), pagesize=letter)
             styles = getSampleStyleSheet()

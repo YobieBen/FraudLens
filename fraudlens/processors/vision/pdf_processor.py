@@ -75,7 +75,7 @@ class PDFProcessor:
     def _try_import_pdf2image(self) -> bool:
         """Try to import pdf2image."""
         try:
-            from pdf2image import convert_from_path, convert_from_bytes
+            from pdf2image import convert_from_bytes, convert_from_path
 
             self.convert_from_path = convert_from_path
             self.convert_from_bytes = convert_from_bytes

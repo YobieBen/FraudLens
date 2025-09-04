@@ -13,8 +13,8 @@ Date: 2025-08-27 18:48:00 PDT
 """
 
 from .detector import VisionFraudDetector
-from .pdf_processor import PDFProcessor
 from .image_preprocessor import ImagePreprocessor
+from .pdf_processor import PDFProcessor
 
 __all__ = [
     "VisionFraudDetector",

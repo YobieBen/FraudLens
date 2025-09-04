@@ -3,15 +3,16 @@ FraudLens Performance Monitor
 Real-time performance monitoring and metrics collection
 """
 
-import time
-import psutil
 import asyncio
-from typing import Dict, Any, List, Optional, Deque
+import statistics
+import time
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from collections import deque
 from threading import Lock
-import statistics
+from typing import Any, Deque, Dict, List, Optional
+
+import psutil
 from loguru import logger
 
 

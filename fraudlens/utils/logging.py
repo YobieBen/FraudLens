@@ -22,7 +22,7 @@ def get_logger(
 ) -> logger:
     """
     Get configured logger instance.
-    
+
     Args:
         name: Logger name
         level: Log level (DEBUG, INFO, WARNING, ERROR)
@@ -30,13 +30,13 @@ def get_logger(
         rotation: Log rotation size/time
         retention: Log retention period
         format: Log format string
-        
+
     Returns:
         Configured logger instance
     """
     # Remove default handler
     logger.remove()
-    
+
     # Set format
     if format is None:
         format = (
@@ -45,7 +45,7 @@ def get_logger(
             "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
             "<level>{message}</level>"
         )
-    
+
     # Add console handler
     logger.add(
         sys.stderr,
@@ -53,7 +53,7 @@ def get_logger(
         level=level,
         colorize=True,
     )
-    
+
     # Add file handler if specified
     if log_file:
         logger.add(
@@ -64,9 +64,9 @@ def get_logger(
             retention=retention,
             compression="zip",
         )
-    
+
     # Bind context if name provided
     if name:
         return logger.bind(name=name)
-    
+
     return logger

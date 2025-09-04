@@ -13,14 +13,14 @@ from fraudlens.pipelines.async_pipeline import AsyncPipeline
 
 class PipelineOrchestrator:
     """Orchestrate multiple pipelines for complex workflows."""
-    
+
     def __init__(self):
         self.pipelines: Dict[str, AsyncPipeline] = {}
-    
+
     def register_pipeline(self, name: str, pipeline: AsyncPipeline) -> None:
         """Register a pipeline."""
         self.pipelines[name] = pipeline
-    
+
     async def execute(self, workflow: Dict[str, Any]) -> Any:
         """Execute a workflow across pipelines."""
         # Simple implementation for now

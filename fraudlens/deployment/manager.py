@@ -20,6 +20,7 @@ import hashlib
 @dataclass
 class AppBundle:
     """Mac application bundle"""
+
     name: str
     version: str
     bundle_id: str
@@ -33,6 +34,7 @@ class AppBundle:
 @dataclass
 class DockerImage:
     """Docker image information"""
+
     repository: str
     tag: str
     image_id: str
@@ -45,6 +47,7 @@ class DockerImage:
 @dataclass
 class DeploymentStatus:
     """Kubernetes deployment status"""
+
     namespace: str
     name: str
     replicas: int
@@ -57,6 +60,7 @@ class DeploymentStatus:
 @dataclass
 class GatewayConfig:
     """API Gateway configuration"""
+
     provider: str  # "kong", "nginx", "aws", "cloudflare"
     endpoints: Dict[str, str]
     rate_limits: Dict[str, int]
@@ -68,6 +72,7 @@ class GatewayConfig:
 @dataclass
 class MonitoringDashboard:
     """Monitoring dashboard configuration"""
+
     provider: str  # "grafana", "datadog", "newrelic"
     url: str
     dashboards: List[str]
@@ -79,34 +84,34 @@ class DeploymentManager:
     """
     Manages FraudLens deployment across platforms
     """
-    
+
     def __init__(self, project_root: str = "."):
         self.project_root = Path(project_root)
         self.deployment_dir = self.project_root / "deployment"
         self.deployment_dir.mkdir(parents=True, exist_ok=True)
-        
+
     def package_for_mac(
         self,
         app_name: str = "FraudLens",
         version: str = "1.0.0",
         bundle_id: str = "com.fraudlens.app",
-        sign_identity: Optional[str] = None
+        sign_identity: Optional[str] = None,
     ) -> AppBundle:
         """
         Package FraudLens as a standalone Mac application
         """
         print("📦 Packaging FraudLens for macOS...")
-        
+
         # Create app bundle structure
         app_dir = self.deployment_dir / f"{app_name}.app"
         contents_dir = app_dir / "Contents"
         macos_dir = contents_dir / "MacOS"
         resources_dir = contents_dir / "Resources"
-        
+
         # Create directories
         for dir_path in [app_dir, contents_dir, macos_dir, resources_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Create PyInstaller spec file
         spec_content = f"""
 # -*- mode: python ; coding: utf-8 -*-
@@ -187,11 +192,11 @@ app = BUNDLE(
     }},
 )
 """
-        
+
         spec_path = self.deployment_dir / f"{app_name}.spec"
-        with open(spec_path, 'w') as f:
+        with open(spec_path, "w") as f:
             f.write(spec_content)
-        
+
         # Create Info.plist
         info_plist = {
             "CFBundleDisplayName": app_name,
@@ -206,41 +211,49 @@ app = BUNDLE(
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "13.0",
             "NSRequiresAquaSystemAppearance": False,
-            "LSApplicationCategoryType": "public.app-category.developer-tools"
+            "LSApplicationCategoryType": "public.app-category.developer-tools",
         }
-        
+
         plist_path = contents_dir / "Info.plist"
-        subprocess.run(["plutil", "-convert", "xml1", "-o", str(plist_path), "-"], 
-                      input=json.dumps(info_plist), text=True, check=True)
-        
+        subprocess.run(
+            ["plutil", "-convert", "xml1", "-o", str(plist_path), "-"],
+            input=json.dumps(info_plist),
+            text=True,
+            check=True,
+        )
+
         # Build with PyInstaller
         print("🔨 Building with PyInstaller...")
         result = subprocess.run(
-            [sys.executable, "-m", "PyInstaller", str(spec_path), "--distpath", str(self.deployment_dir)],
+            [
+                sys.executable,
+                "-m",
+                "PyInstaller",
+                str(spec_path),
+                "--distpath",
+                str(self.deployment_dir),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
-        
+
         if result.returncode != 0:
             print(f"❌ Build failed: {result.stderr}")
             raise RuntimeError("PyInstaller build failed")
-        
+
         # Sign the app if identity provided
         if sign_identity:
             print(f"✍️ Signing app with identity: {sign_identity}")
             subprocess.run(
-                ["codesign", "--deep", "--force", "--sign", sign_identity, str(app_dir)],
-                check=True
+                ["codesign", "--deep", "--force", "--sign", sign_identity, str(app_dir)], check=True
             )
-        
+
         # Calculate app size
-        app_size = sum(
-            f.stat().st_size for f in app_dir.rglob("*") if f.is_file()
-        ) / (1024**2)
-        
+        app_size = sum(f.stat().st_size for f in app_dir.rglob("*") if f.is_file()) / (1024**2)
+
         print(f"✅ Mac app bundle created: {app_dir}")
         print(f"   Size: {app_size:.2f} MB")
-        
+
         return AppBundle(
             name=app_name,
             version=version,
@@ -249,74 +262,77 @@ app = BUNDLE(
             resources_path=resources_dir,
             info_plist=info_plist,
             size_mb=app_size,
-            signature=sign_identity
+            signature=sign_identity,
         )
-    
+
     def build_docker_image(
         self,
         repository: str = "fraudlens",
         tag: str = "latest",
         platforms: List[str] = ["linux/amd64", "linux/arm64"],
         push: bool = False,
-        registry: Optional[str] = None
+        registry: Optional[str] = None,
     ) -> DockerImage:
         """
         Build multi-architecture Docker image
         """
         print(f"🐳 Building Docker image: {repository}:{tag}")
-        
+
         # Ensure Dockerfile exists
         dockerfile_path = self.project_root / "Dockerfile"
         if not dockerfile_path.exists():
             raise FileNotFoundError("Dockerfile not found")
-        
+
         # Setup buildx for multi-platform builds
         print("Setting up Docker buildx...")
         subprocess.run(["docker", "buildx", "create", "--use"], check=True)
-        
+
         # Build command
         build_cmd = [
-            "docker", "buildx", "build",
-            "--platform", ",".join(platforms),
-            "-t", f"{repository}:{tag}",
-            "-f", str(dockerfile_path),
-            "."
+            "docker",
+            "buildx",
+            "build",
+            "--platform",
+            ",".join(platforms),
+            "-t",
+            f"{repository}:{tag}",
+            "-f",
+            str(dockerfile_path),
+            ".",
         ]
-        
+
         if push and registry:
             full_tag = f"{registry}/{repository}:{tag}"
             build_cmd.extend(["-t", full_tag, "--push"])
         else:
             build_cmd.append("--load")
-        
+
         # Build image
         print(f"Building for platforms: {', '.join(platforms)}")
         result = subprocess.run(build_cmd, cwd=self.project_root, capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"❌ Build failed: {result.stderr}")
             raise RuntimeError("Docker build failed")
-        
+
         # Get image info
         image_info = subprocess.run(
-            ["docker", "images", repository, "--format", "json"],
-            capture_output=True,
-            text=True
+            ["docker", "images", repository, "--format", "json"], capture_output=True, text=True
         ).stdout
-        
+
         if image_info:
-            info = json.loads(image_info.split('\n')[0])
+            info = json.loads(image_info.split("\n")[0])
             image_id = info.get("ID", "unknown")
             size_mb = float(info.get("Size", "0").replace("MB", ""))
         else:
             image_id = "unknown"
             size_mb = 0.0
-        
+
         print(f"✅ Docker image built: {repository}:{tag}")
         print(f"   Image ID: {image_id}")
         print(f"   Size: {size_mb:.2f} MB")
         print(f"   Platforms: {', '.join(platforms)}")
-        
+
         return DockerImage(
             repository=repository,
             tag=tag,
@@ -324,9 +340,9 @@ app = BUNDLE(
             size_mb=size_mb,
             layers=0,  # TODO: Get actual layer count
             created=datetime.now(),
-            platforms=platforms
+            platforms=platforms,
         )
-    
+
     def deploy_to_kubernetes(
         self,
         namespace: str = "fraudlens",
@@ -335,19 +351,16 @@ app = BUNDLE(
         cpu_request: str = "500m",
         memory_request: str = "1Gi",
         cpu_limit: str = "2000m",
-        memory_limit: str = "4Gi"
+        memory_limit: str = "4Gi",
     ) -> DeploymentStatus:
         """
         Deploy to Kubernetes cluster
         """
         print(f"☸️ Deploying to Kubernetes namespace: {namespace}")
-        
+
         # Create namespace if it doesn't exist
-        subprocess.run(
-            ["kubectl", "create", "namespace", namespace],
-            capture_output=True
-        )
-        
+        subprocess.run(["kubectl", "create", "namespace", namespace], capture_output=True)
+
         # Generate Kubernetes manifests
         deployment_yaml = f"""
 apiVersion: apps/v1
@@ -443,51 +456,52 @@ spec:
         type: Utilization
         averageUtilization: 80
 """
-        
+
         # Save and apply manifests
         manifest_path = self.deployment_dir / "k8s-deployment.yaml"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             f.write(deployment_yaml)
-        
+
         # Apply to cluster
         print("Applying Kubernetes manifests...")
         result = subprocess.run(
-            ["kubectl", "apply", "-f", str(manifest_path)],
-            capture_output=True,
-            text=True
+            ["kubectl", "apply", "-f", str(manifest_path)], capture_output=True, text=True
         )
-        
+
         if result.returncode != 0:
             print(f"❌ Deployment failed: {result.stderr}")
             raise RuntimeError("Kubernetes deployment failed")
-        
+
         # Wait for deployment to be ready
         print("Waiting for deployment to be ready...")
         subprocess.run(
-            ["kubectl", "wait", "--for=condition=available", 
-             f"--namespace={namespace}", "deployment/fraudlens", 
-             "--timeout=300s"],
-            check=True
+            [
+                "kubectl",
+                "wait",
+                "--for=condition=available",
+                f"--namespace={namespace}",
+                "deployment/fraudlens",
+                "--timeout=300s",
+            ],
+            check=True,
         )
-        
+
         # Get deployment status
         status_json = subprocess.run(
-            ["kubectl", "get", "deployment", "fraudlens", 
-             "-n", namespace, "-o", "json"],
+            ["kubectl", "get", "deployment", "fraudlens", "-n", namespace, "-o", "json"],
             capture_output=True,
-            text=True
+            text=True,
         ).stdout
-        
+
         status = json.loads(status_json)
-        
+
         # Get service endpoints
         service_json = subprocess.run(
-            ["kubectl", "get", "service", "fraudlens-service",
-             "-n", namespace, "-o", "json"],
+            ["kubectl", "get", "service", "fraudlens-service", "-n", namespace, "-o", "json"],
             capture_output=True,
-            text=True
+            text=True,
         ).stdout
-        
+
         service = json.loads(service_json)
         endpoints = []
         if "status" in service and "loadBalancer" in service["status"]:
@@ -496,12 +510,12 @@ spec:
                 if ip:
                     endpoints.append(f"http://{ip}:8000")
                     endpoints.append(f"http://{ip}:7860")
-        
+
         print(f"✅ Deployment successful")
         print(f"   Replicas: {status['status'].get('readyReplicas', 0)}/{replicas}")
         if endpoints:
             print(f"   Endpoints: {', '.join(endpoints)}")
-        
+
         return DeploymentStatus(
             namespace=namespace,
             name="fraudlens",
@@ -509,9 +523,9 @@ spec:
             ready_replicas=status["status"].get("readyReplicas", 0),
             available_replicas=status["status"].get("availableReplicas", 0),
             conditions=status["status"].get("conditions", []),
-            endpoints=endpoints
+            endpoints=endpoints,
         )
-    
+
     def configure_api_gateway(
         self,
         provider: str = "nginx",
@@ -519,13 +533,13 @@ spec:
         ssl_cert: Optional[str] = None,
         ssl_key: Optional[str] = None,
         rate_limit: int = 1000,  # requests per minute
-        enable_auth: bool = True
+        enable_auth: bool = True,
     ) -> GatewayConfig:
         """
         Configure API Gateway
         """
         print(f"🌐 Configuring API Gateway with {provider}")
-        
+
         if provider == "nginx":
             config = self._configure_nginx_gateway(
                 domain, ssl_cert, ssl_key, rate_limit, enable_auth
@@ -535,31 +549,29 @@ spec:
                 domain, ssl_cert, ssl_key, rate_limit, enable_auth
             )
         elif provider == "aws":
-            config = self._configure_aws_api_gateway(
-                domain, rate_limit, enable_auth
-            )
+            config = self._configure_aws_api_gateway(domain, rate_limit, enable_auth)
         else:
             raise ValueError(f"Unsupported gateway provider: {provider}")
-        
+
         print(f"✅ API Gateway configured")
         print(f"   Provider: {provider}")
         print(f"   Domain: {domain}")
         print(f"   Rate limit: {rate_limit} req/min")
         print(f"   Auth: {'Enabled' if enable_auth else 'Disabled'}")
         print(f"   SSL: {'Enabled' if ssl_cert else 'Disabled'}")
-        
+
         return config
-    
+
     def _configure_nginx_gateway(
         self,
         domain: str,
         ssl_cert: Optional[str],
         ssl_key: Optional[str],
         rate_limit: int,
-        enable_auth: bool
+        enable_auth: bool,
     ) -> GatewayConfig:
         """Configure NGINX as API Gateway"""
-        
+
         nginx_config = f"""
 upstream fraudlens_backend {{
     least_conn;
@@ -621,96 +633,88 @@ server {{
     }}
 }}
 """
-        
+
         config_path = self.deployment_dir / "nginx.conf"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             f.write(nginx_config)
-        
+
         return GatewayConfig(
             provider="nginx",
             endpoints={
                 "api": f"https://{domain}/api/v1",
                 "health": f"https://{domain}/health",
-                "metrics": f"https://{domain}/metrics"
+                "metrics": f"https://{domain}/metrics",
             },
             rate_limits={"default": rate_limit},
             auth_enabled=enable_auth,
             ssl_enabled=bool(ssl_cert),
-            cors_origins=["*"]
+            cors_origins=["*"],
         )
-    
+
     def _configure_kong_gateway(
         self,
         domain: str,
         ssl_cert: Optional[str],
         ssl_key: Optional[str],
         rate_limit: int,
-        enable_auth: bool
+        enable_auth: bool,
     ) -> GatewayConfig:
         """Configure Kong API Gateway"""
-        
+
         kong_config = {
-            "services": [{
-                "name": "fraudlens-api",
-                "url": "http://fraudlens-backend:8000",
-                "routes": [{
-                    "name": "fraudlens-route",
-                    "hosts": [domain],
-                    "paths": ["/api/v1"],
-                    "strip_path": True
-                }],
-                "plugins": [
-                    {
-                        "name": "rate-limiting",
-                        "config": {
-                            "minute": rate_limit,
-                            "policy": "cluster"
+            "services": [
+                {
+                    "name": "fraudlens-api",
+                    "url": "http://fraudlens-backend:8000",
+                    "routes": [
+                        {
+                            "name": "fraudlens-route",
+                            "hosts": [domain],
+                            "paths": ["/api/v1"],
+                            "strip_path": True,
                         }
-                    },
-                    {
-                        "name": "cors",
-                        "config": {
-                            "origins": ["*"],
-                            "methods": ["GET", "POST", "PUT", "DELETE"],
-                            "headers": ["Content-Type", "Authorization"]
-                        }
-                    }
-                ]
-            }]
-        }
-        
-        if enable_auth:
-            kong_config["services"][0]["plugins"].append({
-                "name": "key-auth",
-                "config": {
-                    "key_names": ["X-API-Key", "apikey"]
+                    ],
+                    "plugins": [
+                        {
+                            "name": "rate-limiting",
+                            "config": {"minute": rate_limit, "policy": "cluster"},
+                        },
+                        {
+                            "name": "cors",
+                            "config": {
+                                "origins": ["*"],
+                                "methods": ["GET", "POST", "PUT", "DELETE"],
+                                "headers": ["Content-Type", "Authorization"],
+                            },
+                        },
+                    ],
                 }
-            })
-        
+            ]
+        }
+
+        if enable_auth:
+            kong_config["services"][0]["plugins"].append(
+                {"name": "key-auth", "config": {"key_names": ["X-API-Key", "apikey"]}}
+            )
+
         config_path = self.deployment_dir / "kong-config.json"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(kong_config, f, indent=2)
-        
+
         return GatewayConfig(
             provider="kong",
-            endpoints={
-                "api": f"https://{domain}/api/v1",
-                "admin": f"https://{domain}:8001"
-            },
+            endpoints={"api": f"https://{domain}/api/v1", "admin": f"https://{domain}:8001"},
             rate_limits={"default": rate_limit},
             auth_enabled=enable_auth,
             ssl_enabled=bool(ssl_cert),
-            cors_origins=["*"]
+            cors_origins=["*"],
         )
-    
+
     def _configure_aws_api_gateway(
-        self,
-        domain: str,
-        rate_limit: int,
-        enable_auth: bool
+        self, domain: str, rate_limit: int, enable_auth: bool
     ) -> GatewayConfig:
         """Configure AWS API Gateway"""
-        
+
         # CloudFormation template for AWS API Gateway
         cf_template = {
             "AWSTemplateFormatVersion": "2010-09-09",
@@ -719,61 +723,53 @@ server {{
                     "Type": "AWS::ApiGateway::RestApi",
                     "Properties": {
                         "Name": "FraudLensAPI",
-                        "EndpointConfiguration": {
-                            "Types": ["EDGE"]
-                        }
-                    }
+                        "EndpointConfiguration": {"Types": ["EDGE"]},
+                    },
                 },
                 "UsagePlan": {
                     "Type": "AWS::ApiGateway::UsagePlan",
                     "Properties": {
                         "UsagePlanName": "FraudLensUsagePlan",
-                        "Throttle": {
-                            "RateLimit": rate_limit,
-                            "BurstLimit": rate_limit * 2
-                        }
-                    }
-                }
-            }
+                        "Throttle": {"RateLimit": rate_limit, "BurstLimit": rate_limit * 2},
+                    },
+                },
+            },
         }
-        
+
         if enable_auth:
             cf_template["Resources"]["Authorizer"] = {
                 "Type": "AWS::ApiGateway::Authorizer",
                 "Properties": {
                     "Type": "COGNITO_USER_POOLS",
                     "Name": "FraudLensAuthorizer",
-                    "RestApiId": {"Ref": "FraudLensAPI"}
-                }
+                    "RestApiId": {"Ref": "FraudLensAPI"},
+                },
             }
-        
+
         config_path = self.deployment_dir / "aws-api-gateway.json"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(cf_template, f, indent=2)
-        
+
         return GatewayConfig(
             provider="aws",
             endpoints={
                 "api": f"https://{domain}/api/v1",
-                "console": "https://console.aws.amazon.com/apigateway"
+                "console": "https://console.aws.amazon.com/apigateway",
             },
             rate_limits={"default": rate_limit},
             auth_enabled=enable_auth,
             ssl_enabled=True,  # AWS handles SSL
-            cors_origins=["*"]
+            cors_origins=["*"],
         )
-    
+
     def setup_monitoring(
-        self,
-        provider: str = "grafana",
-        metrics_port: int = 9090,
-        alerting: bool = True
+        self, provider: str = "grafana", metrics_port: int = 9090, alerting: bool = True
     ) -> MonitoringDashboard:
         """
         Setup monitoring dashboard
         """
         print(f"📊 Setting up monitoring with {provider}")
-        
+
         if provider == "grafana":
             dashboard = self._setup_grafana_monitoring(metrics_port, alerting)
         elif provider == "datadog":
@@ -782,22 +778,18 @@ server {{
             dashboard = self._setup_prometheus_monitoring(metrics_port, alerting)
         else:
             raise ValueError(f"Unsupported monitoring provider: {provider}")
-        
+
         print(f"✅ Monitoring dashboard configured")
         print(f"   Provider: {provider}")
         print(f"   URL: {dashboard.url}")
         print(f"   Dashboards: {', '.join(dashboard.dashboards)}")
         print(f"   Alerts: {len(dashboard.alerts)} configured")
-        
+
         return dashboard
-    
-    def _setup_grafana_monitoring(
-        self,
-        metrics_port: int,
-        alerting: bool
-    ) -> MonitoringDashboard:
+
+    def _setup_grafana_monitoring(self, metrics_port: int, alerting: bool) -> MonitoringDashboard:
         """Setup Grafana monitoring"""
-        
+
         # Grafana dashboard JSON
         dashboard_config = {
             "dashboard": {
@@ -806,35 +798,29 @@ server {{
                     {
                         "title": "Request Rate",
                         "type": "graph",
-                        "targets": [{
-                            "expr": "rate(fraudlens_requests_total[5m])"
-                        }]
+                        "targets": [{"expr": "rate(fraudlens_requests_total[5m])"}],
                     },
                     {
                         "title": "Latency",
                         "type": "graph",
-                        "targets": [{
-                            "expr": "histogram_quantile(0.95, fraudlens_request_duration_seconds)"
-                        }]
+                        "targets": [
+                            {"expr": "histogram_quantile(0.95, fraudlens_request_duration_seconds)"}
+                        ],
                     },
                     {
                         "title": "Error Rate",
                         "type": "graph",
-                        "targets": [{
-                            "expr": "rate(fraudlens_errors_total[5m])"
-                        }]
+                        "targets": [{"expr": "rate(fraudlens_errors_total[5m])"}],
                     },
                     {
                         "title": "Model Performance",
                         "type": "graph",
-                        "targets": [{
-                            "expr": "fraudlens_model_accuracy"
-                        }]
-                    }
-                ]
+                        "targets": [{"expr": "fraudlens_model_accuracy"}],
+                    },
+                ],
             }
         }
-        
+
         # Alerts configuration
         alerts = []
         if alerting:
@@ -842,139 +828,127 @@ server {{
                 {
                     "name": "HighErrorRate",
                     "condition": "rate(fraudlens_errors_total[5m]) > 0.05",
-                    "severity": "critical"
+                    "severity": "critical",
                 },
                 {
                     "name": "HighLatency",
                     "condition": "histogram_quantile(0.95, fraudlens_request_duration_seconds) > 1",
-                    "severity": "warning"
+                    "severity": "warning",
                 },
                 {
                     "name": "LowAccuracy",
                     "condition": "fraudlens_model_accuracy < 0.9",
-                    "severity": "warning"
-                }
+                    "severity": "warning",
+                },
             ]
-        
+
         config_path = self.deployment_dir / "grafana-dashboard.json"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(dashboard_config, f, indent=2)
-        
+
         return MonitoringDashboard(
             provider="grafana",
             url="http://localhost:3000",
             dashboards=["FraudLens Overview", "Model Performance", "System Metrics"],
             alerts=alerts,
-            metrics_endpoint=f"http://localhost:{metrics_port}/metrics"
+            metrics_endpoint=f"http://localhost:{metrics_port}/metrics",
         )
-    
+
     def _setup_datadog_monitoring(self, alerting: bool) -> MonitoringDashboard:
         """Setup Datadog monitoring"""
-        
+
         # Datadog configuration
         datadog_config = {
             "api_key": "${DATADOG_API_KEY}",
             "site": "datadoghq.com",
             "logs_enabled": True,
             "apm_enabled": True,
-            "process_config": {
-                "enabled": True
-            },
-            "tags": [
-                "service:fraudlens",
-                "env:production"
-            ]
+            "process_config": {"enabled": True},
+            "tags": ["service:fraudlens", "env:production"],
         }
-        
+
         config_path = self.deployment_dir / "datadog.yaml"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             yaml.dump(datadog_config, f)
-        
+
         alerts = []
         if alerting:
             alerts = [
                 {
                     "name": "fraudlens.high_error_rate",
                     "type": "metric",
-                    "query": "avg(last_5m):avg:fraudlens.errors{*} > 0.05"
+                    "query": "avg(last_5m):avg:fraudlens.errors{*} > 0.05",
                 }
             ]
-        
+
         return MonitoringDashboard(
             provider="datadog",
             url="https://app.datadoghq.com",
             dashboards=["FraudLens APM", "Infrastructure", "Logs"],
             alerts=alerts,
-            metrics_endpoint="datadog-agent:8126"
+            metrics_endpoint="datadog-agent:8126",
         )
-    
+
     def _setup_prometheus_monitoring(
-        self,
-        metrics_port: int,
-        alerting: bool
+        self, metrics_port: int, alerting: bool
     ) -> MonitoringDashboard:
         """Setup Prometheus monitoring"""
-        
+
         # Prometheus configuration
         prometheus_config = {
-            "global": {
-                "scrape_interval": "15s",
-                "evaluation_interval": "15s"
-            },
+            "global": {"scrape_interval": "15s", "evaluation_interval": "15s"},
             "scrape_configs": [
                 {
                     "job_name": "fraudlens",
-                    "static_configs": [{
-                        "targets": [f"localhost:{metrics_port}"]
-                    }]
+                    "static_configs": [{"targets": [f"localhost:{metrics_port}"]}],
                 }
-            ]
+            ],
         }
-        
+
         if alerting:
             prometheus_config["rule_files"] = ["alerts.yml"]
-        
+
         config_path = self.deployment_dir / "prometheus.yml"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             yaml.dump(prometheus_config, f)
-        
+
         # Alerts configuration
         alerts = []
         if alerting:
             alerts_config = {
-                "groups": [{
-                    "name": "fraudlens",
-                    "rules": [
-                        {
-                            "alert": "HighErrorRate",
-                            "expr": "rate(fraudlens_errors_total[5m]) > 0.05",
-                            "for": "5m",
-                            "labels": {"severity": "critical"},
-                            "annotations": {
-                                "summary": "High error rate detected"
+                "groups": [
+                    {
+                        "name": "fraudlens",
+                        "rules": [
+                            {
+                                "alert": "HighErrorRate",
+                                "expr": "rate(fraudlens_errors_total[5m]) > 0.05",
+                                "for": "5m",
+                                "labels": {"severity": "critical"},
+                                "annotations": {"summary": "High error rate detected"},
                             }
-                        }
-                    ]
-                }]
+                        ],
+                    }
+                ]
             }
-            
+
             alerts_path = self.deployment_dir / "alerts.yml"
-            with open(alerts_path, 'w') as f:
+            with open(alerts_path, "w") as f:
                 yaml.dump(alerts_config, f)
-            
+
             alerts = alerts_config["groups"][0]["rules"]
-        
+
         return MonitoringDashboard(
             provider="prometheus",
             url=f"http://localhost:{metrics_port}",
             dashboards=["Targets", "Rules", "Alerts"],
             alerts=alerts,
-            metrics_endpoint=f"http://localhost:{metrics_port}/metrics"
+            metrics_endpoint=f"http://localhost:{metrics_port}/metrics",
         )
-    
+
     def generate_deployment_docs(self):
         """Generate comprehensive deployment documentation"""
-        
+
         docs = """# FraudLens Deployment Guide
 
 ## Local Mac Deployment (M4 Optimized)
@@ -1204,9 +1178,9 @@ python -m fraudlens.server --debug
 - Issues: https://github.com/fraudlens/fraudlens/issues
 - Discord: https://discord.gg/fraudlens
 """
-        
+
         docs_path = self.deployment_dir / "DEPLOYMENT.md"
-        with open(docs_path, 'w') as f:
+        with open(docs_path, "w") as f:
             f.write(docs)
-        
+
         print(f"✅ Deployment documentation generated: {docs_path}")

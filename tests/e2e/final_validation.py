@@ -24,7 +24,7 @@ from loguru import logger
 
 class FinalE2EValidation:
     """Final validation suite for user-facing features."""
-    
+
     def __init__(self):
         self.base_url = "http://localhost:7860"
         self.results = []
@@ -32,7 +32,7 @@ class FinalE2EValidation:
         self.failed = 0
         self.test_dir = Path("/tmp/fraudlens_final_validation")
         self.test_dir.mkdir(exist_ok=True)
-        
+
     def log_test(self, feature: str, scenario: str, passed: bool, details: str = ""):
         """Log test result."""
         status = "✅" if passed else "❌"
@@ -41,34 +41,34 @@ class FinalE2EValidation:
             "scenario": scenario,
             "passed": passed,
             "details": details,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.results.append(result)
-        
+
         if passed:
             self.passed += 1
             logger.success(f"{status} {feature}: {scenario}")
         else:
             self.failed += 1
             logger.error(f"{status} {feature}: {scenario} - {details}")
-            
+
     def create_realistic_passport(self) -> Path:
         """Create a realistic-looking passport image."""
         passport_path = self.test_dir / "test_passport.jpg"
-        
+
         # Create passport-like image
-        img = Image.new('RGB', (1200, 800), color='#f5f5dc')
+        img = Image.new("RGB", (1200, 800), color="#f5f5dc")
         draw = ImageDraw.Draw(img)
-        
+
         # Add passport elements
         # Header
-        draw.rectangle([50, 50, 1150, 150], outline='#8B4513', width=3)
-        draw.text((500, 80), "PASSPORT", fill='#8B4513')
-        
+        draw.rectangle([50, 50, 1150, 150], outline="#8B4513", width=3)
+        draw.text((500, 80), "PASSPORT", fill="#8B4513")
+
         # Photo area
-        draw.rectangle([100, 200, 400, 550], outline='#8B4513', width=2)
-        draw.text((200, 350), "PHOTO", fill='#999')
-        
+        draw.rectangle([100, 200, 400, 550], outline="#8B4513", width=2)
+        draw.text((200, 350), "PHOTO", fill="#999")
+
         # Data fields
         fields = [
             ("Type", "P"),
@@ -82,25 +82,25 @@ class FinalE2EValidation:
             ("Date of Issue", "15 MAR 2020"),
             ("Date of Expiry", "14 MAR 2030"),
         ]
-        
+
         y = 200
         for label, value in fields:
-            draw.text((450, y), f"{label}:", fill='#666')
-            draw.text((650, y), value, fill='#000')
+            draw.text((450, y), f"{label}:", fill="#666")
+            draw.text((650, y), value, fill="#000")
             y += 40
-            
+
         # MRZ (Machine Readable Zone)
-        draw.rectangle([50, 650, 1150, 750], fill='#e0e0e0', outline='#8B4513', width=2)
-        draw.text((100, 670), "P<USADOE<<JOHN<MICHAEL<<<<<<<<<<<<<<<<<<<<<<", fill='#000')
-        draw.text((100, 700), "1234567890USA9001011M3003141234567890123456", fill='#000')
-        
+        draw.rectangle([50, 650, 1150, 750], fill="#e0e0e0", outline="#8B4513", width=2)
+        draw.text((100, 670), "P<USADOE<<JOHN<MICHAEL<<<<<<<<<<<<<<<<<<<<<<", fill="#000")
+        draw.text((100, 700), "1234567890USA9001011M3003141234567890123456", fill="#000")
+
         img.save(passport_path)
         return passport_path
-        
+
     def create_suspicious_invoice(self) -> Path:
         """Create a suspicious-looking invoice."""
         invoice_path = self.test_dir / "suspicious_invoice.pdf"
-        
+
         # Create a simple text file as PDF placeholder
         content = """
         INVOICE
@@ -125,93 +125,136 @@ class FinalE2EValidation:
         
         WARNING: Legal action will be taken if not paid within 24 hours!
         """
-        
-        with open(invoice_path, 'w') as f:
+
+        with open(invoice_path, "w") as f:
             f.write(content)
-            
+
         return invoice_path
-        
+
     def create_deepfake_image(self) -> Path:
         """Create an image that simulates deepfake characteristics."""
         deepfake_path = self.test_dir / "deepfake_test.jpg"
-        
-        img = Image.new('RGB', (800, 600), color='white')
+
+        img = Image.new("RGB", (800, 600), color="white")
         draw = ImageDraw.Draw(img)
-        
+
         # Face area with unnatural boundaries
-        draw.ellipse([250, 150, 550, 450], fill='#fdbcb4', outline='#ff0000', width=3)
-        
+        draw.ellipse([250, 150, 550, 450], fill="#fdbcb4", outline="#ff0000", width=3)
+
         # Misaligned features
-        draw.ellipse([320, 250, 360, 290], fill='white', outline='black')  # Left eye
-        draw.ellipse([440, 240, 480, 280], fill='white', outline='black')  # Right eye (misaligned)
-        draw.arc([350, 350, 450, 400], 0, 180, fill='red', width=3)  # Mouth
-        
+        draw.ellipse([320, 250, 360, 290], fill="white", outline="black")  # Left eye
+        draw.ellipse([440, 240, 480, 280], fill="white", outline="black")  # Right eye (misaligned)
+        draw.arc([350, 350, 450, 400], 0, 180, fill="red", width=3)  # Mouth
+
         # Add artifacts
         for i in range(100):
             x = 250 + (i * 3) % 300
             y = 150 + (i * 5) % 300
-            draw.point([x, y], fill='#00ff00')
-            
+            draw.point([x, y], fill="#00ff00")
+
         # Warning text
-        draw.text((200, 500), "AI GENERATED - DEEPFAKE", fill='red')
-        
+        draw.text((200, 500), "AI GENERATED - DEEPFAKE", fill="red")
+
         img.save(deepfake_path)
         return deepfake_path
-        
+
     def create_transaction_data(self) -> str:
         """Create realistic transaction data."""
         transactions = [
             # Normal transactions
-            {"id": "TXN001", "amount": 50.00, "merchant": "Coffee Shop", "time": "08:30", "suspicious": False},
-            {"id": "TXN002", "amount": 120.00, "merchant": "Grocery Store", "time": "10:15", "suspicious": False},
-            {"id": "TXN003", "amount": 30.00, "merchant": "Gas Station", "time": "12:00", "suspicious": False},
-            
+            {
+                "id": "TXN001",
+                "amount": 50.00,
+                "merchant": "Coffee Shop",
+                "time": "08:30",
+                "suspicious": False,
+            },
+            {
+                "id": "TXN002",
+                "amount": 120.00,
+                "merchant": "Grocery Store",
+                "time": "10:15",
+                "suspicious": False,
+            },
+            {
+                "id": "TXN003",
+                "amount": 30.00,
+                "merchant": "Gas Station",
+                "time": "12:00",
+                "suspicious": False,
+            },
             # Suspicious transactions
-            {"id": "TXN004", "amount": 9999.99, "merchant": "OFFSHORE TRANSFER", "time": "03:00", "suspicious": True},
-            {"id": "TXN005", "amount": 5000.00, "merchant": "CRYPTO EXCHANGE", "time": "03:05", "suspicious": True},
-            {"id": "TXN006", "amount": 10000.00, "merchant": "WIRE TRANSFER INTL", "time": "03:10", "suspicious": True},
-            
+            {
+                "id": "TXN004",
+                "amount": 9999.99,
+                "merchant": "OFFSHORE TRANSFER",
+                "time": "03:00",
+                "suspicious": True,
+            },
+            {
+                "id": "TXN005",
+                "amount": 5000.00,
+                "merchant": "CRYPTO EXCHANGE",
+                "time": "03:05",
+                "suspicious": True,
+            },
+            {
+                "id": "TXN006",
+                "amount": 10000.00,
+                "merchant": "WIRE TRANSFER INTL",
+                "time": "03:10",
+                "suspicious": True,
+            },
             # More normal
-            {"id": "TXN007", "amount": 45.00, "merchant": "Restaurant", "time": "19:00", "suspicious": False},
-            {"id": "TXN008", "amount": 200.00, "merchant": "Online Shopping", "time": "20:30", "suspicious": False},
+            {
+                "id": "TXN007",
+                "amount": 45.00,
+                "merchant": "Restaurant",
+                "time": "19:00",
+                "suspicious": False,
+            },
+            {
+                "id": "TXN008",
+                "amount": 200.00,
+                "merchant": "Online Shopping",
+                "time": "20:30",
+                "suspicious": False,
+            },
         ]
-        
+
         return json.dumps(transactions, indent=2)
-        
+
     async def test_text_fraud_detection(self):
         """Test text fraud detection with real-world examples."""
         feature = "Text Fraud Detection"
-        
+
         test_cases = [
             {
                 "scenario": "Phishing Email",
                 "text": "URGENT! Your bank account has been compromised! Click here immediately to secure your account: http://bit.ly/scam-link",
-                "expected": "high_fraud"
+                "expected": "high_fraud",
             },
             {
                 "scenario": "Legitimate Bank Notice",
                 "text": "Your monthly statement for August 2025 is now available. Log into your account through our official website to view.",
-                "expected": "low_fraud"
+                "expected": "low_fraud",
             },
             {
                 "scenario": "Nigerian Prince Scam",
                 "text": "I am Prince Abdullah with $50 million USD to transfer. Send $5000 for processing fees to receive your share.",
-                "expected": "high_fraud"
-            }
+                "expected": "high_fraud",
+            },
         ]
-        
+
         for test in test_cases:
             try:
                 # Make request to Gradio
                 response = requests.post(
                     f"{self.base_url}/run/predict",
-                    json={
-                        "data": [test["text"], "auto"],
-                        "fn_index": 0
-                    },
-                    timeout=10
+                    json={"data": [test["text"], "auto"], "fn_index": 0},
+                    timeout=10,
                 )
-                
+
                 if response.status_code == 200:
                     result = response.json()
                     # Check if result indicates expected fraud level
@@ -219,191 +262,199 @@ class FinalE2EValidation:
                     self.log_test(feature, test["scenario"], passed, "Successfully processed")
                 else:
                     self.log_test(feature, test["scenario"], False, f"HTTP {response.status_code}")
-                    
+
             except Exception as e:
                 self.log_test(feature, test["scenario"], False, str(e))
-                
+
     async def test_document_analysis(self):
         """Test document analysis with realistic documents."""
         feature = "Document Analysis"
-        
+
         # Create test documents
         passport = self.create_realistic_passport()
         invoice = self.create_suspicious_invoice()
-        
+
         test_docs = [
             {"scenario": "Passport Verification", "file": passport, "doc_type": "passport"},
-            {"scenario": "Invoice Fraud Check", "file": invoice, "doc_type": "invoice"}
+            {"scenario": "Invoice Fraud Check", "file": invoice, "doc_type": "invoice"},
         ]
-        
+
         for test in test_docs:
             try:
                 with open(test["file"], "rb") as f:
                     file_data = base64.b64encode(f.read()).decode()
-                
+
                 response = requests.post(
                     f"{self.base_url}/run/predict",
                     json={
                         "data": [
                             {
                                 "name": test["file"].name,
-                                "data": f"data:application/octet-stream;base64,{file_data}"
+                                "data": f"data:application/octet-stream;base64,{file_data}",
                             },
-                            test["doc_type"]
+                            test["doc_type"],
                         ],
-                        "fn_index": 1
+                        "fn_index": 1,
                     },
-                    timeout=15
+                    timeout=15,
                 )
-                
+
                 if response.status_code == 200:
-                    self.log_test(feature, test["scenario"], True, "Document processed successfully")
+                    self.log_test(
+                        feature, test["scenario"], True, "Document processed successfully"
+                    )
                 else:
                     self.log_test(feature, test["scenario"], False, f"HTTP {response.status_code}")
-                    
+
             except Exception as e:
                 self.log_test(feature, test["scenario"], False, str(e))
-                
+
     async def test_image_analysis(self):
         """Test image fraud detection."""
         feature = "Image Analysis"
-        
+
         # Create test images
         deepfake = self.create_deepfake_image()
-        
-        test_images = [
-            {"scenario": "Deepfake Detection", "file": deepfake}
-        ]
-        
+
+        test_images = [{"scenario": "Deepfake Detection", "file": deepfake}]
+
         for test in test_images:
             try:
                 with open(test["file"], "rb") as f:
                     img_data = base64.b64encode(f.read()).decode()
-                
+
                 response = requests.post(
                     f"{self.base_url}/run/predict",
                     json={
                         "data": [
                             {
                                 "name": test["file"].name,
-                                "data": f"data:image/jpeg;base64,{img_data}"
+                                "data": f"data:image/jpeg;base64,{img_data}",
                             }
                         ],
-                        "fn_index": 2
+                        "fn_index": 2,
                     },
-                    timeout=15
+                    timeout=15,
                 )
-                
+
                 if response.status_code == 200:
                     self.log_test(feature, test["scenario"], True, "Image analyzed successfully")
                 else:
                     self.log_test(feature, test["scenario"], False, f"HTTP {response.status_code}")
-                    
+
             except Exception as e:
                 self.log_test(feature, test["scenario"], False, str(e))
-                
+
     async def test_transaction_monitoring(self):
         """Test transaction monitoring."""
         feature = "Transaction Monitoring"
-        
+
         try:
             transactions = self.create_transaction_data()
-            
+
             response = requests.post(
                 f"{self.base_url}/run/predict",
-                json={
-                    "data": [transactions, "real-time", 5000],
-                    "fn_index": 3
-                },
-                timeout=10
+                json={"data": [transactions, "real-time", 5000], "fn_index": 3},
+                timeout=10,
             )
-            
+
             if response.status_code == 200:
-                self.log_test(feature, "Suspicious Transaction Detection", True, 
-                            "Transactions analyzed successfully")
+                self.log_test(
+                    feature,
+                    "Suspicious Transaction Detection",
+                    True,
+                    "Transactions analyzed successfully",
+                )
             else:
-                self.log_test(feature, "Suspicious Transaction Detection", False, 
-                            f"HTTP {response.status_code}")
-                
+                self.log_test(
+                    feature,
+                    "Suspicious Transaction Detection",
+                    False,
+                    f"HTTP {response.status_code}",
+                )
+
         except Exception as e:
             self.log_test(feature, "Suspicious Transaction Detection", False, str(e))
-            
+
     async def test_compliance_features(self):
         """Test compliance and regulatory features."""
         feature = "Compliance"
-        
+
         compliance_data = {
             "user_id": "test_user_001",
             "data_category": "financial_transactions",
             "retention_period": 90,
             "purpose": "fraud_detection",
-            "consent": True
+            "consent": True,
         }
-        
+
         try:
             response = requests.post(
                 f"{self.base_url}/run/predict",
-                json={
-                    "data": [json.dumps(compliance_data, indent=2), "GDPR"],
-                    "fn_index": 4
-                },
-                timeout=10
+                json={"data": [json.dumps(compliance_data, indent=2), "GDPR"], "fn_index": 4},
+                timeout=10,
             )
-            
+
             if response.status_code == 200:
-                self.log_test(feature, "GDPR Compliance Check", True, 
-                            "Compliance validated successfully")
+                self.log_test(
+                    feature, "GDPR Compliance Check", True, "Compliance validated successfully"
+                )
             else:
-                self.log_test(feature, "GDPR Compliance Check", False, 
-                            f"HTTP {response.status_code}")
-                
+                self.log_test(
+                    feature, "GDPR Compliance Check", False, f"HTTP {response.status_code}"
+                )
+
         except Exception as e:
             self.log_test(feature, "GDPR Compliance Check", False, str(e))
-            
+
     async def test_ui_responsiveness(self):
         """Test UI responsiveness and availability."""
         feature = "UI Performance"
-        
+
         # Test main page loads
         try:
             start = time.time()
             response = requests.get(self.base_url, timeout=5)
             load_time = (time.time() - start) * 1000
-            
+
             if response.status_code == 200 and load_time < 2000:
                 self.log_test(feature, "Page Load Time", True, f"{load_time:.0f}ms")
             else:
-                self.log_test(feature, "Page Load Time", False, 
-                            f"Status: {response.status_code}, Time: {load_time:.0f}ms")
-                
+                self.log_test(
+                    feature,
+                    "Page Load Time",
+                    False,
+                    f"Status: {response.status_code}, Time: {load_time:.0f}ms",
+                )
+
         except Exception as e:
             self.log_test(feature, "Page Load Time", False, str(e))
-            
+
         # Test API responsiveness
         try:
             start = time.time()
             response = requests.post(
                 f"{self.base_url}/run/predict",
                 json={"data": ["test", "auto"], "fn_index": 0},
-                timeout=5
+                timeout=5,
             )
             api_time = (time.time() - start) * 1000
-            
+
             if api_time < 1000:
                 self.log_test(feature, "API Response Time", True, f"{api_time:.0f}ms")
             else:
                 self.log_test(feature, "API Response Time", False, f"Too slow: {api_time:.0f}ms")
-                
+
         except Exception as e:
             self.log_test(feature, "API Response Time", False, str(e))
-            
+
     async def run_validation(self):
         """Run complete validation suite."""
         logger.info("=" * 80)
         logger.info("🚀 Starting Final E2E Validation for FraudLens")
         logger.info("=" * 80)
         logger.info("")
-        
+
         # Check if server is running
         try:
             response = requests.get(self.base_url, timeout=5)
@@ -413,32 +464,32 @@ class FinalE2EValidation:
         except:
             logger.error("❌ Cannot connect to Gradio server at http://localhost:7860")
             return False
-            
+
         # Run all validation tests
         logger.info("📋 Testing User Features:")
         logger.info("-" * 40)
-        
+
         await self.test_text_fraud_detection()
         await asyncio.sleep(0.5)
-        
+
         await self.test_document_analysis()
         await asyncio.sleep(0.5)
-        
+
         await self.test_image_analysis()
         await asyncio.sleep(0.5)
-        
+
         await self.test_transaction_monitoring()
         await asyncio.sleep(0.5)
-        
+
         await self.test_compliance_features()
         await asyncio.sleep(0.5)
-        
+
         await self.test_ui_responsiveness()
-        
+
         # Calculate results
         total = self.passed + self.failed
         pass_rate = (self.passed / total * 100) if total > 0 else 0
-        
+
         # Print summary
         logger.info("")
         logger.info("=" * 80)
@@ -449,7 +500,7 @@ class FinalE2EValidation:
         logger.info(f"❌ Failed: {self.failed}")
         logger.info(f"📈 Pass Rate: {pass_rate:.1f}%")
         logger.info("")
-        
+
         # Feature summary
         features = {}
         for result in self.results:
@@ -460,32 +511,36 @@ class FinalE2EValidation:
                 features[feature]["passed"] += 1
             else:
                 features[feature]["failed"] += 1
-                
+
         logger.info("📱 Feature Status:")
         for feature, counts in features.items():
             total_f = counts["passed"] + counts["failed"]
             rate = (counts["passed"] / total_f * 100) if total_f > 0 else 0
             status = "✅" if rate == 100 else "⚠️" if rate >= 50 else "❌"
             logger.info(f"  {status} {feature}: {rate:.0f}% working ({counts['passed']}/{total_f})")
-            
+
         # Save results
         results_file = Path("final_validation_results.json")
         with open(results_file, "w") as f:
-            json.dump({
-                "summary": {
-                    "total": total,
-                    "passed": self.passed,
-                    "failed": self.failed,
-                    "pass_rate": pass_rate,
-                    "timestamp": datetime.now().isoformat()
+            json.dump(
+                {
+                    "summary": {
+                        "total": total,
+                        "passed": self.passed,
+                        "failed": self.failed,
+                        "pass_rate": pass_rate,
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                    "features": features,
+                    "detailed_results": self.results,
                 },
-                "features": features,
-                "detailed_results": self.results
-            }, f, indent=2)
-            
+                f,
+                indent=2,
+            )
+
         logger.info("")
         logger.info(f"💾 Results saved to: {results_file}")
-        
+
         # Final verdict
         logger.info("")
         logger.info("=" * 80)
@@ -499,7 +554,7 @@ class FinalE2EValidation:
             logger.error("❌ NEEDS WORK: Several features are not functioning.")
             logger.info("Please review the failed tests and fix the issues.")
         logger.info("=" * 80)
-        
+
         return pass_rate >= 70
 
 

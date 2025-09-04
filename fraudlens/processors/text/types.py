@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class FraudResult:
     """Fraud detection result."""
-    
+
     fraud_score: float
     confidence: float
     fraud_types: List[Any]  # Will be FraudType enums
@@ -24,7 +24,7 @@ class FraudResult:
 @dataclass
 class PhishingResult:
     """Phishing detection result."""
-    
+
     is_phishing: bool
     confidence: float
     indicators: List[str]
@@ -34,7 +34,7 @@ class PhishingResult:
 @dataclass
 class SocialEngineeringResult:
     """Social engineering detection result."""
-    
+
     detected: bool
     confidence: float
     tactics: List[str]
@@ -44,7 +44,7 @@ class SocialEngineeringResult:
 @dataclass
 class DocumentResult:
     """Financial document analysis result."""
-    
+
     is_fraudulent: bool
     confidence: float
     anomalies: List[str]

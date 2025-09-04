@@ -9,8 +9,4 @@ from .threat_intel import ThreatIntelligenceManager
 from .document_validator import DocumentValidator
 from .phishing_db import PhishingDatabaseConnector
 
-__all__ = [
-    "ThreatIntelligenceManager",
-    "DocumentValidator", 
-    "PhishingDatabaseConnector"
-]
+__all__ = ["ThreatIntelligenceManager", "DocumentValidator", "PhishingDatabaseConnector"]

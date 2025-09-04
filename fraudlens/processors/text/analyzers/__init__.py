@@ -12,7 +12,7 @@ from fraudlens.processors.text.analyzers.money_laundering import MoneyLaundering
 
 __all__ = [
     "PhishingAnalyzer",
-    "SocialEngineeringAnalyzer", 
+    "SocialEngineeringAnalyzer",
     "FinancialDocumentAnalyzer",
     "MoneyLaunderingAnalyzer",
 ]

@@ -10,7 +10,7 @@ from .qr_code_analyzer import QRCodeAnalyzer
 
 __all__ = [
     "DeepfakeDetector",
-    "DocumentForgeryDetector", 
+    "DocumentForgeryDetector",
     "LogoImpersonationDetector",
     "ManipulationDetector",
     "QRCodeAnalyzer",

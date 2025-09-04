@@ -1,7 +1,7 @@
 """
 Synthetic fraud data generator for testing.
 
-Author: Yobie Benjamin  
+Author: Yobie Benjamin
 Date: 2025
 """
 
@@ -24,13 +24,13 @@ from reportlab.pdfgen import canvas
 @dataclass
 class SyntheticDocument:
     """Synthetic document data."""
-    
+
     doc_type: str
     content: str
     metadata: Dict[str, Any]
     file_path: Optional[Path] = None
     fraud_indicators: List[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -42,10 +42,10 @@ class SyntheticDocument:
         }
 
 
-@dataclass  
+@dataclass
 class SyntheticEmail:
     """Synthetic email data."""
-    
+
     sender: str
     recipient: str
     subject: str
@@ -54,7 +54,7 @@ class SyntheticEmail:
     attachments: List[str]
     fraud_type: Optional[str] = None
     fraud_score: float = 0.0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -72,7 +72,7 @@ class SyntheticEmail:
 @dataclass
 class MultiModalCase:
     """Multi-modal fraud test case."""
-    
+
     case_id: str
     text_data: Optional[str] = None
     image_data: Optional[Path] = None
@@ -80,7 +80,7 @@ class MultiModalCase:
     audio_data: Optional[Path] = None
     metadata: Dict[str, Any] = None
     ground_truth: Dict[str, Any] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -96,31 +96,31 @@ class MultiModalCase:
 
 class SyntheticFraudGenerator:
     """Generator for synthetic fraud data."""
-    
+
     def __init__(self, output_dir: str = "synthetic_data", seed: int = 42):
         """
         Initialize generator.
-        
+
         Args:
             output_dir: Directory for generated files
             seed: Random seed for reproducibility
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
-        
+
         # Set random seeds
         random.seed(seed)
         np.random.seed(seed)
-        
+
         # Initialize Faker
         self.faker = Faker()
         Faker.seed(seed)
-        
+
         # Fraud templates
         self.phishing_templates = self._load_phishing_templates()
         self.document_templates = self._load_document_templates()
         self.transaction_patterns = self._load_transaction_patterns()
-    
+
     def generate_phishing_email(
         self,
         fraud_type: str = "generic",
@@ -130,20 +130,20 @@ class SyntheticFraudGenerator:
     ) -> SyntheticEmail:
         """
         Generate synthetic phishing email.
-        
+
         Args:
             fraud_type: Type of phishing (generic, spear, whaling, etc.)
             language: Language code
             urgency_level: Urgency level (1-10)
             personalization: Add personalization elements
-            
+
         Returns:
             Synthetic phishing email
         """
         # Generate recipient
         recipient = self.faker.email()
         recipient_name = self.faker.name() if personalization else "Customer"
-        
+
         # Select template based on fraud type
         templates = {
             "generic": self._generate_generic_phishing,
@@ -153,15 +153,15 @@ class SyntheticFraudGenerator:
             "romance": self._generate_romance_scam,
             "lottery": self._generate_lottery_scam,
         }
-        
+
         generator = templates.get(fraud_type, self._generate_generic_phishing)
-        
+
         # Generate email content
         sender, subject, body = generator(recipient_name, urgency_level)
-        
+
         # Add fraud indicators
         body = self._inject_fraud_indicators(body, urgency_level)
-        
+
         # Generate headers
         headers = {
             "From": sender,
@@ -171,12 +171,12 @@ class SyntheticFraudGenerator:
             "X-Mailer": random.choice(["Outlook", "Gmail", "Yahoo", "Custom Mailer"]),
             "X-Originating-IP": self.faker.ipv4(),
         }
-        
+
         # Add suspicious headers for high urgency
         if urgency_level > 7:
             headers["X-Priority"] = "1 (Highest)"
             headers["Importance"] = "High"
-        
+
         email = SyntheticEmail(
             sender=sender,
             recipient=recipient,
@@ -187,9 +187,9 @@ class SyntheticFraudGenerator:
             fraud_type=fraud_type,
             fraud_score=min(1.0, urgency_level / 10.0 + random.uniform(0, 0.2)),
         )
-        
+
         return email
-    
+
     def _generate_generic_phishing(
         self,
         recipient_name: str,
@@ -198,20 +198,22 @@ class SyntheticFraudGenerator:
         """Generate generic phishing email."""
         companies = ["PayPal", "Amazon", "Netflix", "Apple", "Microsoft", "Google"]
         company = random.choice(companies)
-        
+
         # Typosquatted sender
-        sender_domain = company.lower().replace("a", "@") if urgency_level > 7 else f"{company.lower()}.com"
+        sender_domain = (
+            company.lower().replace("a", "@") if urgency_level > 7 else f"{company.lower()}.com"
+        )
         sender = f"security@{sender_domain}"
-        
+
         subjects = [
             f"Urgent: Your {company} account requires verification",
             f"Action Required: Suspicious activity on your {company} account",
             f"Important: Update your {company} payment information",
             f"Security Alert: Your {company} account will be suspended",
         ]
-        
+
         subject = random.choice(subjects)
-        
+
         body = f"""Dear {recipient_name},
 
 We have detected suspicious activity on your {company} account. For your security, we have temporarily limited access to your account.
@@ -225,9 +227,9 @@ If you do not verify within 24 hours, your account will be permanently suspended
 Thank you for your cooperation.
 
 {company} Security Team"""
-        
+
         return sender, subject, body
-    
+
     def _generate_spear_phishing(
         self,
         recipient_name: str,
@@ -237,10 +239,10 @@ Thank you for your cooperation.
         # Simulate knowledge of recipient
         company = self.faker.company()
         ceo_name = self.faker.name()
-        
+
         sender = f"{ceo_name.lower().replace(' ', '.')}@{company.lower().replace(' ', '')}.com"
         subject = f"Urgent: Wire Transfer Required - {ceo_name}"
-        
+
         body = f"""Hi {recipient_name},
 
 I need you to process an urgent wire transfer for a confidential acquisition. I'm currently in meetings and cannot call.
@@ -260,9 +262,9 @@ Send confirmation once complete.
 CEO, {company}
 
 Sent from my iPhone"""
-        
+
         return sender, subject, body
-    
+
     def _generate_whaling_phishing(
         self,
         recipient_name: str,
@@ -271,7 +273,7 @@ Sent from my iPhone"""
         """Generate whaling (CEO fraud) email."""
         sender = "legal@tax-authority.gov"
         subject = "Notice of Tax Audit - Immediate Response Required"
-        
+
         body = f"""Dear {recipient_name},
 
 This is an official notice from the Tax Authority regarding your company's tax filings for the fiscal year 2023-2024.
@@ -296,9 +298,9 @@ Case Reference: TX-2024-{random.randint(10000, 99999)}
 
 Sincerely,
 Tax Compliance Department"""
-        
+
         return sender, subject, body
-    
+
     def _generate_tech_support_scam(
         self,
         recipient_name: str,
@@ -307,7 +309,7 @@ Tax Compliance Department"""
         """Generate tech support scam email."""
         sender = "support@windows-security.com"
         subject = "Critical Security Alert: Virus Detected on Your Computer"
-        
+
         body = f"""SECURITY WARNING!
 
 Dear {recipient_name},
@@ -331,9 +333,9 @@ Warning: Every minute counts. Delaying action may result in complete data loss.
 Microsoft Certified Support Team
 
 This is an automated security notification. Do not ignore this message."""
-        
+
         return sender, subject, body
-    
+
     def _generate_romance_scam(
         self,
         recipient_name: str,
@@ -343,7 +345,7 @@ This is an automated security notification. Do not ignore this message."""
         scammer_name = self.faker.name()
         sender = f"{scammer_name.lower().replace(' ', '_')}@loveconnect.com"
         subject = f"My dearest {recipient_name} - I need your help"
-        
+
         body = f"""My dearest {recipient_name},
 
 I know we have only been talking for a few weeks, but I feel such a strong connection with you. You have brought light into my life during these dark times.
@@ -362,9 +364,9 @@ I cannot wait to finally meet you in person and hold you in my arms.
 
 With all my love,
 {scammer_name}"""
-        
+
         return sender, subject, body
-    
+
     def _generate_lottery_scam(
         self,
         recipient_name: str,
@@ -373,10 +375,10 @@ With all my love,
         """Generate lottery scam email."""
         sender = "claims@international-lottery.org"
         subject = "Congratulations! You've Won $10,000,000"
-        
+
         amount = random.choice(["$10,000,000", "€5,000,000", "£7,500,000"])
         reference = f"WIN/{random.randint(100000, 999999)}/INT"
-        
+
         body = f"""CONGRATULATIONS {recipient_name.upper()}!
 
 We are pleased to inform you that you have won {amount} in the International Online Lottery!
@@ -403,31 +405,33 @@ Phone: +{random.randint(10, 99)}-{random.randint(100, 999)}-{random.randint(1000
 Congratulations once again!
 
 International Lottery Commission"""
-        
+
         return sender, subject, body
-    
+
     def _inject_fraud_indicators(self, body: str, urgency_level: int) -> str:
         """Inject fraud indicators into email body."""
         indicators = []
-        
+
         if urgency_level > 7:
-            indicators.extend([
-                "\n\n⚠️ This email will self-destruct in 24 hours",
-                "\n\nACT NOW - Limited time offer!",
-                "\n\n*** FINAL NOTICE ***",
-            ])
-        
+            indicators.extend(
+                [
+                    "\n\n⚠️ This email will self-destruct in 24 hours",
+                    "\n\nACT NOW - Limited time offer!",
+                    "\n\n*** FINAL NOTICE ***",
+                ]
+            )
+
         if urgency_level > 5:
             # Add suspicious URLs
             body = body.replace(
                 "[Click here",
-                "[Click here: http://bit.ly/" + ''.join(random.choices(string.ascii_letters, k=7))
+                "[Click here: http://bit.ly/" + "".join(random.choices(string.ascii_letters, k=7)),
             )
-            
+
             # Add urgency words
             urgency_words = ["URGENT", "IMMEDIATE", "ACT NOW", "FINAL NOTICE"]
             body = random.choice(urgency_words) + ": " + body
-        
+
         # Add typos for realism
         if random.random() > 0.7:
             typos = [
@@ -439,9 +443,9 @@ International Lottery Commission"""
             for correct, typo in typos:
                 if random.random() > 0.5 and correct in body:
                     body = body.replace(correct, typo, 1)
-        
+
         return body + "".join(indicators)
-    
+
     def create_forged_document(
         self,
         doc_type: str = "invoice",
@@ -450,12 +454,12 @@ International Lottery Commission"""
     ) -> SyntheticDocument:
         """
         Create forged document for testing.
-        
+
         Args:
             doc_type: Type of document (invoice, contract, id, etc.)
             forgery_type: Type of forgery (altered, fake, cloned)
             output_format: Output format (pdf, image)
-            
+
         Returns:
             Synthetic forged document
         """
@@ -466,36 +470,38 @@ International Lottery Commission"""
             "bank_statement": self._create_forged_bank_statement,
             "certificate": self._create_forged_certificate,
         }
-        
+
         generator = generators.get(doc_type, self._create_forged_invoice)
         document = generator(forgery_type)
-        
+
         # Generate file
         if output_format == "pdf":
             file_path = self._generate_pdf(document)
         else:
             file_path = self._generate_image(document)
-        
+
         document.file_path = file_path
-        
+
         return document
-    
+
     def _create_forged_invoice(self, forgery_type: str) -> SyntheticDocument:
         """Create forged invoice."""
         company = self.faker.company()
         invoice_num = f"INV-{random.randint(10000, 99999)}"
-        
+
         # Original content
         items = []
         for _ in range(random.randint(3, 7)):
-            items.append({
-                "description": self.faker.bs(),
-                "quantity": random.randint(1, 100),
-                "price": round(random.uniform(10, 1000), 2),
-            })
-        
+            items.append(
+                {
+                    "description": self.faker.bs(),
+                    "quantity": random.randint(1, 100),
+                    "price": round(random.uniform(10, 1000), 2),
+                }
+            )
+
         subtotal = sum(item["quantity"] * item["price"] for item in items)
-        
+
         content = f"""
 INVOICE
 
@@ -513,13 +519,13 @@ Bill To:
 
 Items:
 """
-        
+
         for item in items:
             content += f"\n{item['description']} - Qty: {item['quantity']} x ${item['price']} = ${item['quantity'] * item['price']:.2f}"
-        
+
         # Apply forgery
         fraud_indicators = []
-        
+
         if forgery_type == "altered":
             # Alter amounts
             content += f"\n\nSubtotal: ${subtotal:.2f}"
@@ -533,12 +539,12 @@ Items:
             fraud_indicators.append("fabricated_document")
         else:
             content += f"\n\nTotal: ${subtotal * 1.1:.2f}"
-        
+
         # Add subtle forgery indicators
         if random.random() > 0.5:
             content = content.replace("Invoice", "Invioce")  # Typo
             fraud_indicators.append("suspicious_typo")
-        
+
         metadata = {
             "doc_type": "invoice",
             "company": company,
@@ -546,19 +552,19 @@ Items:
             "forgery_type": forgery_type,
             "created": datetime.now().isoformat(),
         }
-        
+
         return SyntheticDocument(
             doc_type="invoice",
             content=content,
             metadata=metadata,
             fraud_indicators=fraud_indicators,
         )
-    
+
     def _create_forged_contract(self, forgery_type: str) -> SyntheticDocument:
         """Create forged contract."""
         party1 = self.faker.company()
         party2 = self.faker.company()
-        
+
         content = f"""
 SERVICE AGREEMENT
 
@@ -579,9 +585,9 @@ Party 1 agrees to pay Party 2 the amount of ${random.uniform(10000, 100000):.2f}
 TERM:
 This agreement shall commence on {datetime.now().date()} and continue for a period of 12 months.
 """
-        
+
         fraud_indicators = []
-        
+
         if forgery_type == "altered":
             # Alter signature area
             content += "\n\nSIGNATURES:\n_______________ (Party 1)\n_______________ (Party 2)"
@@ -590,26 +596,26 @@ This agreement shall commence on {datetime.now().date()} and continue for a peri
         elif forgery_type == "fake":
             content += "\n\n[Forged signatures applied]"
             fraud_indicators.append("forged_signatures")
-        
+
         metadata = {
             "doc_type": "contract",
             "parties": [party1, party2],
             "forgery_type": forgery_type,
         }
-        
+
         return SyntheticDocument(
             doc_type="contract",
             content=content,
             metadata=metadata,
             fraud_indicators=fraud_indicators,
         )
-    
+
     def _create_forged_id(self, forgery_type: str) -> SyntheticDocument:
         """Create forged ID document."""
         name = self.faker.name()
         dob = self.faker.date_of_birth(minimum_age=18, maximum_age=80)
-        id_number = ''.join(random.choices(string.digits, k=9))
-        
+        id_number = "".join(random.choices(string.digits, k=9))
+
         content = f"""
 IDENTIFICATION DOCUMENT
 
@@ -622,9 +628,9 @@ Expiry Date: {datetime.now().date() + timedelta(days=random.randint(365, 1825))}
 Address:
 {self.faker.address()}
 """
-        
+
         fraud_indicators = []
-        
+
         if forgery_type == "altered":
             # Alter DOB to appear younger/older
             content += "\n\n[Date of birth appears modified]"
@@ -632,26 +638,26 @@ Address:
         elif forgery_type == "fake":
             content += "\n\n[Hologram and security features missing]"
             fraud_indicators.append("missing_security_features")
-        
+
         metadata = {
             "doc_type": "id",
             "name": name,
             "id_number": id_number,
             "forgery_type": forgery_type,
         }
-        
+
         return SyntheticDocument(
             doc_type="id",
             content=content,
             metadata=metadata,
             fraud_indicators=fraud_indicators,
         )
-    
+
     def _create_forged_bank_statement(self, forgery_type: str) -> SyntheticDocument:
         """Create forged bank statement."""
         bank_name = random.choice(["Chase Bank", "Bank of America", "Wells Fargo", "Citi Bank"])
-        account_number = ''.join(random.choices(string.digits, k=10))
-        
+        account_number = "".join(random.choices(string.digits, k=10))
+
         content = f"""
 {bank_name}
 BANK STATEMENT
@@ -664,27 +670,29 @@ Opening Balance: ${random.uniform(1000, 10000):.2f}
 
 Transactions:
 """
-        
+
         transactions = []
         balance = random.uniform(1000, 10000)
-        
+
         for i in range(random.randint(10, 20)):
             date = datetime.now() - timedelta(days=random.randint(1, 30))
             amount = random.uniform(-500, 1000)
             balance += amount
-            
-            transactions.append({
-                "date": date.date(),
-                "description": self.faker.company() if amount < 0 else "Deposit",
-                "amount": amount,
-                "balance": balance,
-            })
-        
+
+            transactions.append(
+                {
+                    "date": date.date(),
+                    "description": self.faker.company() if amount < 0 else "Deposit",
+                    "amount": amount,
+                    "balance": balance,
+                }
+            )
+
         for trans in sorted(transactions, key=lambda x: x["date"]):
             content += f"\n{trans['date']} | {trans['description'][:30]:30} | ${trans['amount']:>10.2f} | ${trans['balance']:>10.2f}"
-        
+
         fraud_indicators = []
-        
+
         if forgery_type == "altered":
             # Inflate final balance
             balance *= 10
@@ -695,28 +703,30 @@ Transactions:
             fraud_indicators.append("fabricated_transactions")
         else:
             content += f"\n\nClosing Balance: ${balance:.2f}"
-        
+
         metadata = {
             "doc_type": "bank_statement",
             "bank": bank_name,
             "account_number": account_number,
             "forgery_type": forgery_type,
         }
-        
+
         return SyntheticDocument(
             doc_type="bank_statement",
             content=content,
             metadata=metadata,
             fraud_indicators=fraud_indicators,
         )
-    
+
     def _create_forged_certificate(self, forgery_type: str) -> SyntheticDocument:
         """Create forged certificate."""
         institution = self.faker.company() + " University"
         recipient = self.faker.name()
         degree = random.choice(["Bachelor of Science", "Master of Arts", "Doctor of Philosophy"])
-        field = random.choice(["Computer Science", "Business Administration", "Engineering", "Medicine"])
-        
+        field = random.choice(
+            ["Computer Science", "Business Administration", "Engineering", "Medicine"]
+        )
+
         content = f"""
 {institution}
 
@@ -735,16 +745,16 @@ Awarded on: {self.faker.date_between(start_date='-5y', end_date='today')}
 Dean: {self.faker.name()}
 President: {self.faker.name()}
 """
-        
+
         fraud_indicators = []
-        
+
         if forgery_type == "altered":
             content += "\n\n[Degree type appears modified]"
             fraud_indicators.append("degree_alteration")
         elif forgery_type == "fake":
             content += "\n\n[Institution not accredited]"
             fraud_indicators.append("fake_institution")
-        
+
         metadata = {
             "doc_type": "certificate",
             "institution": institution,
@@ -752,30 +762,30 @@ President: {self.faker.name()}
             "degree": degree,
             "forgery_type": forgery_type,
         }
-        
+
         return SyntheticDocument(
             doc_type="certificate",
             content=content,
             metadata=metadata,
             fraud_indicators=fraud_indicators,
         )
-    
+
     def _generate_pdf(self, document: SyntheticDocument) -> Path:
         """Generate PDF file from document."""
         filename = f"{document.doc_type}_{datetime.now():%Y%m%d_%H%M%S}.pdf"
         file_path = self.output_dir / filename
-        
+
         c = canvas.Canvas(str(file_path), pagesize=letter)
-        
+
         # Add content
         y_position = 750
-        for line in document.content.split('\n'):
+        for line in document.content.split("\n"):
             if y_position < 50:
                 c.showPage()
                 y_position = 750
             c.drawString(50, y_position, line)
             y_position -= 15
-        
+
         # Add watermark for forged documents
         if document.fraud_indicators:
             c.setFont("Helvetica", 60)
@@ -785,26 +795,26 @@ President: {self.faker.name()}
             c.rotate(45)
             c.drawCentredString(0, 0, "TEST DOCUMENT")
             c.restoreState()
-        
+
         c.save()
-        
+
         return file_path
-    
+
     def _generate_image(self, document: SyntheticDocument) -> Path:
         """Generate image file from document."""
         filename = f"{document.doc_type}_{datetime.now():%Y%m%d_%H%M%S}.png"
         file_path = self.output_dir / filename
-        
+
         # Create image
-        img = Image.new('RGB', (800, 1000), color='white')
+        img = Image.new("RGB", (800, 1000), color="white")
         draw = ImageDraw.Draw(img)
-        
+
         # Add content
         y_position = 50
-        for line in document.content.split('\n'):
-            draw.text((50, y_position), line, fill='black')
+        for line in document.content.split("\n"):
+            draw.text((50, y_position), line, fill="black")
             y_position += 20
-        
+
         # Add artifacts for forged documents
         if document.fraud_indicators:
             # Add noise
@@ -817,11 +827,11 @@ President: {self.faker.name()}
                     random.randint(200, 255),
                     random.randint(200, 255),
                 )
-        
+
         img.save(file_path)
-        
+
         return file_path
-    
+
     def synthesize_fraud_scenario(
         self,
         scenario_type: str = "phishing_campaign",
@@ -829,16 +839,16 @@ President: {self.faker.name()}
     ) -> MultiModalCase:
         """
         Synthesize complete fraud scenario.
-        
+
         Args:
             scenario_type: Type of fraud scenario
             complexity: Complexity level (low, medium, high)
-            
+
         Returns:
             Multi-modal fraud case
         """
         case_id = f"CASE_{datetime.now():%Y%m%d_%H%M%S}_{random.randint(1000, 9999)}"
-        
+
         scenarios = {
             "phishing_campaign": self._scenario_phishing_campaign,
             "identity_theft": self._scenario_identity_theft,
@@ -846,12 +856,12 @@ President: {self.faker.name()}
             "financial_fraud": self._scenario_financial_fraud,
             "social_engineering": self._scenario_social_engineering,
         }
-        
+
         generator = scenarios.get(scenario_type, self._scenario_phishing_campaign)
         case = generator(case_id, complexity)
-        
+
         return case
-    
+
     def _scenario_phishing_campaign(
         self,
         case_id: str,
@@ -863,10 +873,10 @@ President: {self.faker.name()}
             fraud_type="spear" if complexity == "high" else "generic",
             urgency_level=8 if complexity == "high" else 5,
         )
-        
+
         # Generate fake landing page screenshot
         landing_page = self._create_fake_landing_page()
-        
+
         # Create supporting document
         if complexity in ["medium", "high"]:
             document = self.create_forged_document(
@@ -875,7 +885,7 @@ President: {self.faker.name()}
             )
         else:
             document = None
-        
+
         ground_truth = {
             "is_fraud": True,
             "fraud_type": "phishing",
@@ -886,7 +896,7 @@ President: {self.faker.name()}
                 "fake_landing_page",
             ],
         }
-        
+
         return MultiModalCase(
             case_id=case_id,
             text_data=email.body,
@@ -898,7 +908,7 @@ President: {self.faker.name()}
             },
             ground_truth=ground_truth,
         )
-    
+
     def _scenario_identity_theft(
         self,
         case_id: str,
@@ -910,13 +920,13 @@ President: {self.faker.name()}
             doc_type="id",
             forgery_type="fake" if complexity == "high" else "altered",
         )
-        
+
         # Create supporting documents
         bank_statement = self.create_forged_document(
             doc_type="bank_statement",
             forgery_type="altered",
         )
-        
+
         # Generate application text
         application_text = f"""
 Loan Application
@@ -928,7 +938,7 @@ Requested Amount: ${random.randint(10000, 50000)}
 
 Purpose: {self.faker.bs()}
 """
-        
+
         ground_truth = {
             "is_fraud": True,
             "fraud_type": "identity_theft",
@@ -939,7 +949,7 @@ Purpose: {self.faker.bs()}
                 "inconsistent_information",
             ],
         }
-        
+
         return MultiModalCase(
             case_id=case_id,
             text_data=application_text,
@@ -951,7 +961,7 @@ Purpose: {self.faker.bs()}
             },
             ground_truth=ground_truth,
         )
-    
+
     def _scenario_document_fraud(
         self,
         case_id: str,
@@ -961,21 +971,21 @@ Purpose: {self.faker.bs()}
         # Create multiple forged documents
         docs = []
         doc_types = ["invoice", "contract", "certificate"] if complexity == "high" else ["invoice"]
-        
+
         for doc_type in doc_types:
             doc = self.create_forged_document(
                 doc_type=doc_type,
                 forgery_type="altered" if complexity == "medium" else "fake",
             )
             docs.append(doc)
-        
+
         ground_truth = {
             "is_fraud": True,
             "fraud_type": "document_fraud",
             "severity": complexity,
             "indicators": [doc.fraud_indicators for doc in docs],
         }
-        
+
         return MultiModalCase(
             case_id=case_id,
             text_data=docs[0].content,
@@ -986,7 +996,7 @@ Purpose: {self.faker.bs()}
             },
             ground_truth=ground_truth,
         )
-    
+
     def _scenario_financial_fraud(
         self,
         case_id: str,
@@ -998,10 +1008,10 @@ Purpose: {self.faker.bs()}
             pattern_type="money_laundering" if complexity == "high" else "card_fraud",
             num_transactions=100 if complexity == "high" else 20,
         )
-        
+
         # Create fake receipts
         receipt = self._create_fake_receipt()
-        
+
         ground_truth = {
             "is_fraud": True,
             "fraud_type": "financial_fraud",
@@ -1012,7 +1022,7 @@ Purpose: {self.faker.bs()}
                 "amount_anomaly",
             ],
         }
-        
+
         return MultiModalCase(
             case_id=case_id,
             text_data=json.dumps(transactions, indent=2),
@@ -1023,7 +1033,7 @@ Purpose: {self.faker.bs()}
             },
             ground_truth=ground_truth,
         )
-    
+
     def _scenario_social_engineering(
         self,
         case_id: str,
@@ -1032,10 +1042,10 @@ Purpose: {self.faker.bs()}
         """Generate social engineering scenario."""
         # Generate conversation transcript
         transcript = self._generate_social_engineering_transcript(complexity)
-        
+
         # Generate fake social media profile
         profile_image = self._create_fake_profile()
-        
+
         ground_truth = {
             "is_fraud": True,
             "fraud_type": "social_engineering",
@@ -1046,7 +1056,7 @@ Purpose: {self.faker.bs()}
                 "urgency_creation",
             ],
         }
-        
+
         return MultiModalCase(
             case_id=case_id,
             text_data=transcript,
@@ -1057,12 +1067,12 @@ Purpose: {self.faker.bs()}
             },
             ground_truth=ground_truth,
         )
-    
+
     def _generate_social_engineering_transcript(self, complexity: str) -> str:
         """Generate social engineering conversation."""
         attacker = self.faker.name()
         victim = self.faker.name()
-        
+
         transcript = f"""
 Chat Transcript
 Participants: {attacker}, {victim}
@@ -1073,7 +1083,7 @@ Participants: {attacker}, {victim}
 {victim}: No, I haven't left the country.
 {attacker}: We need to secure your account immediately. Can you verify your current password?
 """
-        
+
         if complexity == "high":
             transcript += f"""
 {victim}: Isn't it against policy to ask for passwords?
@@ -1085,84 +1095,84 @@ Participants: {attacker}, {victim}
 {victim}: It's EMP78234
 {attacker}: Great. For the final step, please install our security patch: [malicious link]
 """
-        
+
         return transcript
-    
+
     def _create_fake_landing_page(self) -> Path:
         """Create fake phishing landing page screenshot."""
         filename = f"landing_page_{datetime.now():%Y%m%d_%H%M%S}.png"
         file_path = self.output_dir / filename
-        
+
         # Create image
-        img = Image.new('RGB', (1200, 800), color='white')
+        img = Image.new("RGB", (1200, 800), color="white")
         draw = ImageDraw.Draw(img)
-        
+
         # Draw fake login form
-        draw.rectangle([400, 200, 800, 600], outline='gray', width=2)
-        draw.text((550, 220), "PayPaI Login", fill='blue', font=None)  # Note the typo
-        draw.text((450, 300), "Email:", fill='black')
-        draw.rectangle([450, 320, 750, 350], outline='gray')
-        draw.text((450, 380), "Password:", fill='black')
-        draw.rectangle([450, 400, 750, 430], outline='gray')
-        draw.rectangle([520, 480, 680, 520], fill='blue')
-        draw.text((570, 490), "Sign In", fill='white')
-        
+        draw.rectangle([400, 200, 800, 600], outline="gray", width=2)
+        draw.text((550, 220), "PayPaI Login", fill="blue", font=None)  # Note the typo
+        draw.text((450, 300), "Email:", fill="black")
+        draw.rectangle([450, 320, 750, 350], outline="gray")
+        draw.text((450, 380), "Password:", fill="black")
+        draw.rectangle([450, 400, 750, 430], outline="gray")
+        draw.rectangle([520, 480, 680, 520], fill="blue")
+        draw.text((570, 490), "Sign In", fill="white")
+
         # Add suspicious URL
-        draw.text((450, 700), "https://paypaI-secure.fake-site.com/login", fill='gray')
-        
+        draw.text((450, 700), "https://paypaI-secure.fake-site.com/login", fill="gray")
+
         img.save(file_path)
-        
+
         return file_path
-    
+
     def _create_fake_receipt(self) -> Path:
         """Create fake receipt image."""
         filename = f"receipt_{datetime.now():%Y%m%d_%H%M%S}.png"
         file_path = self.output_dir / filename
-        
+
         # Create image
-        img = Image.new('RGB', (400, 600), color='white')
+        img = Image.new("RGB", (400, 600), color="white")
         draw = ImageDraw.Draw(img)
-        
+
         # Draw receipt
         store = self.faker.company()
-        draw.text((150, 50), store, fill='black')
-        draw.text((50, 100), f"Date: {datetime.now().date()}", fill='black')
-        draw.text((50, 130), f"Trans #: {random.randint(10000, 99999)}", fill='black')
-        
+        draw.text((150, 50), store, fill="black")
+        draw.text((50, 100), f"Date: {datetime.now().date()}", fill="black")
+        draw.text((50, 130), f"Trans #: {random.randint(10000, 99999)}", fill="black")
+
         y = 180
         total = 0
         for _ in range(random.randint(3, 7)):
             item = self.faker.word()
             price = random.uniform(10, 100)
-            draw.text((50, y), f"{item[:20]:20} ${price:.2f}", fill='black')
+            draw.text((50, y), f"{item[:20]:20} ${price:.2f}", fill="black")
             y += 30
             total += price
-        
-        draw.line([(50, y), (350, y)], fill='black')
+
+        draw.line([(50, y), (350, y)], fill="black")
         y += 20
-        draw.text((50, y), f"TOTAL: ${total:.2f}", fill='black')
-        
+        draw.text((50, y), f"TOTAL: ${total:.2f}", fill="black")
+
         img.save(file_path)
-        
+
         return file_path
-    
+
     def _create_fake_profile(self) -> Path:
         """Create fake social media profile image."""
         filename = f"profile_{datetime.now():%Y%m%d_%H%M%S}.png"
         file_path = self.output_dir / filename
-        
+
         # Create image
-        img = Image.new('RGB', (200, 200), color='lightgray')
+        img = Image.new("RGB", (200, 200), color="lightgray")
         draw = ImageDraw.Draw(img)
-        
+
         # Draw placeholder profile
-        draw.ellipse([50, 50, 150, 150], fill='white', outline='gray')
-        draw.text((85, 85), "FAKE", fill='red')
-        
+        draw.ellipse([50, 50, 150, 150], fill="white", outline="gray")
+        draw.text((85, 85), "FAKE", fill="red")
+
         img.save(file_path)
-        
+
         return file_path
-    
+
     def generate_transaction_pattern(
         self,
         pattern_type: str = "normal",
@@ -1171,25 +1181,25 @@ Participants: {attacker}, {victim}
     ) -> List[Dict[str, Any]]:
         """
         Generate transaction patterns.
-        
+
         Args:
             pattern_type: Type of pattern (normal, card_fraud, money_laundering)
             num_transactions: Number of transactions
             anomaly_rate: Rate of anomalous transactions
-            
+
         Returns:
             List of transaction records
         """
         transactions = []
         current_balance = random.uniform(1000, 10000)
-        
+
         for i in range(num_transactions):
             timestamp = datetime.now() - timedelta(
                 days=random.randint(0, 30),
                 hours=random.randint(0, 23),
                 minutes=random.randint(0, 59),
             )
-            
+
             if pattern_type == "normal":
                 transaction = self._generate_normal_transaction(timestamp, current_balance)
             elif pattern_type == "card_fraud":
@@ -1201,13 +1211,13 @@ Participants: {attacker}, {victim}
                 transaction = self._generate_ml_transaction(timestamp, current_balance, i)
             else:
                 transaction = self._generate_normal_transaction(timestamp, current_balance)
-            
+
             current_balance += transaction["amount"]
             transaction["balance"] = current_balance
             transactions.append(transaction)
-        
+
         return sorted(transactions, key=lambda x: x["timestamp"])
-    
+
     def _generate_normal_transaction(
         self,
         timestamp: datetime,
@@ -1215,10 +1225,14 @@ Participants: {attacker}, {victim}
     ) -> Dict[str, Any]:
         """Generate normal transaction."""
         merchants = [
-            "Grocery Store", "Gas Station", "Restaurant",
-            "Online Shopping", "Utility Company", "Coffee Shop",
+            "Grocery Store",
+            "Gas Station",
+            "Restaurant",
+            "Online Shopping",
+            "Utility Company",
+            "Coffee Shop",
         ]
-        
+
         return {
             "id": str(random.randint(100000, 999999)),
             "timestamp": timestamp.isoformat(),
@@ -1228,7 +1242,7 @@ Participants: {attacker}, {victim}
             "location": self.faker.city(),
             "fraud_score": random.uniform(0, 0.3),
         }
-    
+
     def _generate_fraud_transaction(
         self,
         timestamp: datetime,
@@ -1237,13 +1251,16 @@ Participants: {attacker}, {victim}
         """Generate fraudulent transaction."""
         # Unusual merchants
         merchants = [
-            "Online Casino", "Crypto Exchange", "Foreign ATM",
-            "Luxury Goods Store", "Wire Transfer Service",
+            "Online Casino",
+            "Crypto Exchange",
+            "Foreign ATM",
+            "Luxury Goods Store",
+            "Wire Transfer Service",
         ]
-        
+
         # Unusual patterns
         amount = -random.uniform(500, min(balance * 0.5, 5000))
-        
+
         return {
             "id": str(random.randint(100000, 999999)),
             "timestamp": timestamp.isoformat(),
@@ -1253,7 +1270,7 @@ Participants: {attacker}, {victim}
             "location": self.faker.country(),  # Foreign location
             "fraud_score": random.uniform(0.7, 1.0),
         }
-    
+
     def _generate_ml_transaction(
         self,
         timestamp: datetime,
@@ -1273,7 +1290,7 @@ Participants: {attacker}, {victim}
         else:
             # Normal transaction for cover
             return self._generate_normal_transaction(timestamp, balance)
-        
+
         return {
             "id": str(random.randint(100000, 999999)),
             "timestamp": timestamp.isoformat(),
@@ -1283,7 +1300,7 @@ Participants: {attacker}, {victim}
             "location": self.faker.city(),
             "fraud_score": random.uniform(0.5, 0.9),
         }
-    
+
     def generate_test_dataset(
         self,
         size: int = 1000,
@@ -1292,12 +1309,12 @@ Participants: {attacker}, {victim}
     ) -> Dict[str, Any]:
         """
         Generate complete test dataset.
-        
+
         Args:
             size: Number of samples
             fraud_rate: Percentage of fraud cases
             output_file: Path to save dataset
-            
+
         Returns:
             Test dataset
         """
@@ -1310,38 +1327,40 @@ Participants: {attacker}, {victim}
             },
             "samples": [],
         }
-        
+
         num_fraud = int(size * fraud_rate)
         num_normal = size - num_fraud
-        
+
         print(f"Generating {size} samples ({num_fraud} fraud, {num_normal} normal)...")
-        
+
         # Generate fraud samples
         for i in range(num_fraud):
-            scenario_type = random.choice([
-                "phishing_campaign",
-                "identity_theft",
-                "document_fraud",
-                "financial_fraud",
-                "social_engineering",
-            ])
-            
+            scenario_type = random.choice(
+                [
+                    "phishing_campaign",
+                    "identity_theft",
+                    "document_fraud",
+                    "financial_fraud",
+                    "social_engineering",
+                ]
+            )
+
             complexity = random.choice(["low", "medium", "high"])
-            
+
             case = self.synthesize_fraud_scenario(scenario_type, complexity)
-            
+
             sample = {
                 "id": f"SAMPLE_{i:05d}",
                 "type": "fraud",
                 "scenario": scenario_type,
                 "data": case.to_dict(),
             }
-            
+
             dataset["samples"].append(sample)
-            
+
             if (i + 1) % 100 == 0:
                 print(f"  Generated {i + 1}/{num_fraud} fraud samples")
-        
+
         # Generate normal samples
         for i in range(num_normal):
             # Create benign data
@@ -1361,28 +1380,28 @@ Participants: {attacker}, {victim}
                     },
                 },
             }
-            
+
             dataset["samples"].append(sample)
-            
+
             if (i + 1) % 100 == 0:
                 print(f"  Generated {i + 1}/{num_normal} normal samples")
-        
+
         # Shuffle samples
         random.shuffle(dataset["samples"])
-        
+
         # Save dataset
         if output_file:
             output_path = Path(output_file)
         else:
             output_path = self.output_dir / f"test_dataset_{datetime.now():%Y%m%d_%H%M%S}.json"
-        
+
         with open(output_path, "w") as f:
             json.dump(dataset, f, indent=2)
-        
+
         print(f"\nDataset saved to: {output_path}")
-        
+
         return dataset
-    
+
     def _load_phishing_templates(self) -> Dict[str, List[str]]:
         """Load phishing email templates."""
         return {
@@ -1411,7 +1430,7 @@ Participants: {attacker}, {victim}
                 "Secure your account",
             ],
         }
-    
+
     def _load_document_templates(self) -> Dict[str, Any]:
         """Load document templates."""
         return {
@@ -1425,10 +1444,14 @@ Participants: {attacker}, {victim}
             },
             "id": {
                 "fields": ["name", "dob", "id_number", "photo"],
-                "forgery_indicators": ["photo_replaced", "dob_altered", "security_features_missing"],
+                "forgery_indicators": [
+                    "photo_replaced",
+                    "dob_altered",
+                    "security_features_missing",
+                ],
             },
         }
-    
+
     def _load_transaction_patterns(self) -> Dict[str, Any]:
         """Load transaction patterns."""
         return {
@@ -1453,7 +1476,7 @@ Participants: {attacker}, {victim}
 if __name__ == "__main__":
     # Example usage
     generator = SyntheticFraudGenerator()
-    
+
     # Generate phishing email
     email = generator.generate_phishing_email(
         fraud_type="spear",
@@ -1463,7 +1486,7 @@ if __name__ == "__main__":
     print(f"\nGenerated Phishing Email:")
     print(f"Subject: {email.subject}")
     print(f"Fraud Score: {email.fraud_score:.2f}")
-    
+
     # Create forged document
     document = generator.create_forged_document(
         doc_type="invoice",
@@ -1472,7 +1495,7 @@ if __name__ == "__main__":
     print(f"\nGenerated Forged Document:")
     print(f"Type: {document.doc_type}")
     print(f"Fraud Indicators: {document.fraud_indicators}")
-    
+
     # Synthesize complete scenario
     scenario = generator.synthesize_fraud_scenario(
         scenario_type="phishing_campaign",
@@ -1481,7 +1504,7 @@ if __name__ == "__main__":
     print(f"\nGenerated Fraud Scenario:")
     print(f"Case ID: {scenario.case_id}")
     print(f"Ground Truth: {scenario.ground_truth}")
-    
+
     # Generate test dataset
     dataset = generator.generate_test_dataset(
         size=100,

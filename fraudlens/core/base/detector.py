@@ -17,7 +17,7 @@ import numpy as np
 
 class FraudType(Enum):
     """Enumeration of fraud types."""
-    
+
     IDENTITY_THEFT = "identity_theft"
     PAYMENT_FRAUD = "payment_fraud"
     DOCUMENT_FORGERY = "document_forgery"
@@ -36,7 +36,7 @@ class FraudType(Enum):
 
 class Modality(Enum):
     """Supported input modalities."""
-    
+
     TEXT = "text"
     IMAGE = "image"
     PDF = "pdf"
@@ -48,7 +48,7 @@ class Modality(Enum):
 @dataclass
 class DetectionResult:
     """Result from fraud detection analysis."""
-    
+
     fraud_score: float  # 0.0 to 1.0
     fraud_types: List[FraudType]
     confidence: float  # 0.0 to 1.0
@@ -59,11 +59,11 @@ class DetectionResult:
     modality: Modality
     processing_time_ms: float
     metadata: Optional[Dict[str, Any]] = None
-    
+
     def is_fraud(self, threshold: float = 0.5) -> bool:
         """Check if result indicates fraud based on threshold."""
         return self.fraud_score >= threshold
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary for serialization."""
         return {
@@ -76,13 +76,13 @@ class DetectionResult:
             "detector_id": self.detector_id,
             "modality": self.modality.value,
             "processing_time_ms": self.processing_time_ms,
-            "metadata": self.metadata or {}
+            "metadata": self.metadata or {},
         }
 
 
 class FraudDetector(ABC):
     """Abstract base class for all fraud detectors."""
-    
+
     def __init__(
         self,
         detector_id: str,
@@ -93,7 +93,7 @@ class FraudDetector(ABC):
     ):
         """
         Initialize fraud detector.
-        
+
         Args:
             detector_id: Unique identifier for this detector
             modality: Input modality this detector supports
@@ -108,61 +108,56 @@ class FraudDetector(ABC):
         self.device = device
         self._model = None
         self._initialized = False
-        
+
     @abstractmethod
     async def initialize(self) -> None:
         """Initialize detector and load models."""
         pass
-    
+
     @abstractmethod
     async def detect(
-        self,
-        input_data: Union[str, bytes, np.ndarray, Path],
-        **kwargs
+        self, input_data: Union[str, bytes, np.ndarray, Path], **kwargs
     ) -> DetectionResult:
         """
         Perform fraud detection on input data.
-        
+
         Args:
             input_data: Input to analyze (format depends on modality)
             **kwargs: Additional detector-specific parameters
-            
+
         Returns:
             DetectionResult containing fraud analysis
         """
         pass
-    
+
     @abstractmethod
     async def cleanup(self) -> None:
         """Clean up resources and unload models."""
         pass
-    
+
     @abstractmethod
     def get_memory_usage(self) -> int:
         """
         Get current memory usage in bytes.
-        
+
         Returns:
             Memory usage in bytes
         """
         pass
-    
+
     @abstractmethod
-    def validate_input(
-        self,
-        input_data: Union[str, bytes, np.ndarray, Path]
-    ) -> bool:
+    def validate_input(self, input_data: Union[str, bytes, np.ndarray, Path]) -> bool:
         """
         Validate input data format and content.
-        
+
         Args:
             input_data: Input to validate
-            
+
         Returns:
             True if input is valid, False otherwise
         """
         pass
-    
+
     def get_info(self) -> Dict[str, Any]:
         """Get detector information and capabilities."""
         return {
@@ -173,7 +168,7 @@ class FraudDetector(ABC):
             "model_path": str(self.model_path) if self.model_path else None,
             "config": self.config,
         }
-    
+
     def __repr__(self) -> str:
         """String representation of detector."""
         return (

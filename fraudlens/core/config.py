@@ -10,11 +10,11 @@ from typing import Any, Dict, Optional
 
 class Config:
     """Configuration management for FraudLens."""
-    
+
     def __init__(self, config_dict: Optional[Dict] = None):
         """Initialize configuration."""
         self._config = config_dict or self._default_config()
-    
+
     def _default_config(self) -> Dict:
         """Get default configuration."""
         return {
@@ -39,12 +39,12 @@ class Config:
                 "directory": "plugins",
             },
         }
-    
+
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by dot-notation key."""
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
-        
+
         for k in keys:
             if isinstance(value, dict):
                 value = value.get(k)
@@ -52,21 +52,21 @@ class Config:
                     return default
             else:
                 return default
-        
+
         return value
-    
+
     def set(self, key: str, value: Any):
         """Set configuration value by dot-notation key."""
-        keys = key.split('.')
+        keys = key.split(".")
         config = self._config
-        
+
         for k in keys[:-1]:
             if k not in config:
                 config[k] = {}
             config = config[k]
-        
+
         config[keys[-1]] = value
-    
+
     def to_dict(self) -> Dict:
         """Get configuration as dictionary."""
         return self._config.copy()

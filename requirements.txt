@@ -83,7 +83,7 @@ pytest-benchmark==4.0.0
 Faker==20.0.0
 
 # Code quality
-black==24.8.0
+black==25.9.0
 ruff==0.6.4
 flake8==6.1.0
 isort==5.13.2

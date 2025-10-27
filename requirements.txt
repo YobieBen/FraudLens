@@ -58,7 +58,7 @@ sentencepiece==0.2.0
 # coremltools==7.2  # Uncomment for CoreML support
 
 # API and web
-fastapi==0.112.2
+fastapi==0.120.0
 uvicorn==0.30.6
 pydantic==2.8.2
 python-multipart==0.0.9

@@ -79,7 +79,7 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
         path: |
@@ -156,7 +156,7 @@ jobs:
         coverage xml
 
     - name: Upload Coverage Reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: coverage-report
         path: |

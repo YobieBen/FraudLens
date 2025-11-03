@@ -11,10 +11,23 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from loguru import logger
+from PIL import Image
+
+# Try to import torch and related modules
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torchvision.transforms as transforms
+
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+    nn = None
+    F = None
+    transforms = None
 
 try:
     import mediapipe as mp
@@ -23,9 +36,6 @@ try:
 except ImportError:
     MEDIAPIPE_AVAILABLE = False
     mp = None
-
-import torchvision.transforms as transforms
-from PIL import Image
 
 try:
     from scipy import signal
@@ -70,69 +80,74 @@ class DeepfakeDetectionResult:
     metadata: Dict[str, Any]
 
 
-class FaceForensicsNet(nn.Module):
-    """Enhanced CNN for deepfake detection."""
+# Only define torch-dependent classes if torch is available
+if TORCH_AVAILABLE:
+    class FaceForensicsNet(nn.Module):
+        """Enhanced CNN for deepfake detection."""
 
-    def __init__(self, num_classes: int = 2):
-        super(FaceForensicsNet, self).__init__()
+        def __init__(self, num_classes: int = 2):
+            super(FaceForensicsNet, self).__init__()
 
-        # Convolutional layers for feature extraction
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(128)
-        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm2d(256)
-        self.conv4 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm2d(512)
+            # Convolutional layers for feature extraction
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+            self.bn1 = nn.BatchNorm2d(64)
+            self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+            self.bn2 = nn.BatchNorm2d(128)
+            self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+            self.bn3 = nn.BatchNorm2d(256)
+            self.conv4 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+            self.bn4 = nn.BatchNorm2d(512)
 
-        # Attention mechanism
-        self.attention = nn.Sequential(
-            nn.Conv2d(512, 256, kernel_size=1),
-            nn.ReLU(),
-            nn.Conv2d(256, 512, kernel_size=1),
-            nn.Sigmoid(),
-        )
+            # Attention mechanism
+            self.attention = nn.Sequential(
+                nn.Conv2d(512, 256, kernel_size=1),
+                nn.ReLU(),
+                nn.Conv2d(256, 512, kernel_size=1),
+                nn.Sigmoid(),
+            )
 
-        # Global average pooling
-        self.global_pool = nn.AdaptiveAvgPool2d(1)
+            # Global average pooling
+            self.global_pool = nn.AdaptiveAvgPool2d(1)
 
-        # Classifier
-        self.classifier = nn.Sequential(
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(128, num_classes),
-        )
+            # Classifier
+            self.classifier = nn.Sequential(
+                nn.Linear(512, 256),
+                nn.ReLU(),
+                nn.Dropout(0.5),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+                nn.Dropout(0.5),
+                nn.Linear(128, num_classes),
+            )
 
-    def forward(self, x):
-        # Feature extraction
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.max_pool2d(x, 2)
+        def forward(self, x):
+            # Feature extraction
+            x = F.relu(self.bn1(self.conv1(x)))
+            x = F.max_pool2d(x, 2)
 
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.max_pool2d(x, 2)
+            x = F.relu(self.bn2(self.conv2(x)))
+            x = F.max_pool2d(x, 2)
 
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = F.max_pool2d(x, 2)
+            x = F.relu(self.bn3(self.conv3(x)))
+            x = F.max_pool2d(x, 2)
 
-        x = F.relu(self.bn4(self.conv4(x)))
+            x = F.relu(self.bn4(self.conv4(x)))
 
-        # Apply attention
-        attention_weights = self.attention(x)
-        x = x * attention_weights
+            # Apply attention
+            attention_weights = self.attention(x)
+            x = x * attention_weights
 
-        # Global pooling
-        x = self.global_pool(x)
-        x = x.view(x.size(0), -1)
+            # Global pooling
+            x = self.global_pool(x)
+            x = x.view(x.size(0), -1)
 
-        # Classification
-        output = self.classifier(x)
+            # Classification
+            output = self.classifier(x)
 
-        return output, attention_weights
+            return output, attention_weights
+else:
+    # Placeholder when torch is not available
+    FaceForensicsNet = None
 
 
 class DeepfakeDetector:
@@ -140,7 +155,11 @@ class DeepfakeDetector:
 
     def __init__(self, model_path: Optional[str] = None):
         """Initialize deepfake detector with advanced models."""
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if TORCH_AVAILABLE:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = "cpu"
+            logger.warning("PyTorch not available, deepfake detection features will be limited")
 
         # Initialize face detection and analysis if available
         if MEDIAPIPE_AVAILABLE:
@@ -160,20 +179,24 @@ class DeepfakeDetector:
             self.face_mesh = None
             logger.warning("MediaPipe not available, using basic face detection")
 
-        # Initialize deepfake detection model
-        self.model = FaceForensicsNet().to(self.device)
-        if model_path and Path(model_path).exists():
-            self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.eval()
+        # Initialize deepfake detection model (only if torch is available)
+        if TORCH_AVAILABLE and FaceForensicsNet is not None:
+            self.model = FaceForensicsNet().to(self.device)
+            if model_path and Path(model_path).exists():
+                self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+            self.model.eval()
 
-        # Image preprocessing
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize((256, 256)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        )
+            # Image preprocessing
+            self.transform = transforms.Compose(
+                [
+                    transforms.Resize((256, 256)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ]
+            )
+        else:
+            self.model = None
+            self.transform = None
 
         # Detection thresholds
         self.deepfake_threshold = 0.7
@@ -478,6 +501,10 @@ class DeepfakeDetector:
 
     def _detect_with_cnn(self, face_image: np.ndarray) -> Tuple[float, Optional[np.ndarray]]:
         """Run CNN-based deepfake detection."""
+        if not TORCH_AVAILABLE or self.model is None or self.transform is None:
+            logger.warning("PyTorch or model not available, skipping CNN detection")
+            return 0.0, None
+
         try:
             # Prepare image
             face_pil = Image.fromarray(cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB))

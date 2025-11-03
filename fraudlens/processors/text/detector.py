@@ -33,8 +33,17 @@ from fraudlens.processors.text.analyzers.social_engineering import SocialEnginee
 from fraudlens.processors.text.cache_manager import CacheManager
 from fraudlens.processors.text.feature_extractor import FeatureExtractor
 from fraudlens.processors.text.llm_manager import LLMManager
-from fraudlens.processors.vision.deepfake_detector import DeepfakeDetectionResult, DeepfakeDetector
-from fraudlens.processors.vision.video_fraud_detector import VideoAnalysisResult, VideoFraudDetector
+
+# Make torch-dependent imports optional
+try:
+    from fraudlens.processors.vision.deepfake_detector import DeepfakeDetectionResult, DeepfakeDetector
+    from fraudlens.processors.vision.video_fraud_detector import VideoAnalysisResult, VideoFraudDetector
+except ImportError:
+    # torch not available, create placeholder types
+    DeepfakeDetectionResult = None
+    DeepfakeDetector = None
+    VideoAnalysisResult = None
+    VideoFraudDetector = None
 
 
 @dataclass
@@ -226,9 +235,18 @@ class TextFraudDetector(FraudDetector):
             self.llm_manager, self.feature_extractor
         )
 
-        # Initialize vision-based detectors
-        self.video_fraud_detector = VideoFraudDetector()
-        self.deepfake_detector = DeepfakeDetector()
+        # Initialize vision-based detectors (if available)
+        if VideoFraudDetector is not None:
+            self.video_fraud_detector = VideoFraudDetector()
+        else:
+            self.video_fraud_detector = None
+            logger.warning("VideoFraudDetector not available (requires PyTorch)")
+
+        if DeepfakeDetector is not None:
+            self.deepfake_detector = DeepfakeDetector()
+        else:
+            self.deepfake_detector = None
+            logger.warning("DeepfakeDetector not available (requires PyTorch)")
 
         self._initialized = True
         init_time = (time.time() - start_time) * 1000

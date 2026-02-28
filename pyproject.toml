@@ -66,6 +66,12 @@ dependencies = [
     "rich>=13.8.0",
     "tqdm>=4.66.0",
     "jsonschema>=4.23.0",
+    # Observability
+    "prometheus-client>=0.19.0",
+    "structlog>=23.2.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-instrumentation>=0.41b0",
 ]
 
 [project.optional-dependencies]

@@ -2,7 +2,7 @@
 # Optimized for size, security, and performance
 
 # Stage 1: Builder
-FROM python:3.11-slim as builder
+FROM python:3.14-slim as builder
 
 # Build arguments
 ARG BUILD_DATE
@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Production
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \

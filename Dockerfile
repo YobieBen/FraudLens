@@ -2,7 +2,7 @@
 # Author: Yobie Benjamin
 # Date: 2025-08-26 18:34:00 PDT
 
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Set working directory
 WORKDIR /app
